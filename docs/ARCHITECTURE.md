@@ -151,7 +151,7 @@ verificações são complementares, não substitutas uma da outra.
 **Tipos** (rápido, cobre todo o projeto de uma vez):
 
 ```bash
-npx tsc -p tsconfig.json
+npm run check
 ```
 
 **Runtime** (necessário para qualquer mudança em `app.js`,
