@@ -1,0 +1,657 @@
+/* ============================================================
+   Conceito: o produto É um debugger em miniatura — código com
+   linha ativa, pilha de chamadas, navegação passo a passo. O visual
+   puxa pra estética de instrumento de depuração real, não pra
+   "dashboard genérico": tipografia monoespaçada onde é técnico
+   (código, rótulos, controles), pilha desenhada como pilha física
+   (frames recuam/perdem força conforme se afastam do topo), linha
+   ativa marcada como um breakpoint de verdade.
+   ============================================================ */
+
+:root[data-theme="light"] {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --panel-alt: #eef0f3;
+  --text: #1a1d22;
+  --muted: #5b6472;
+  --border: #dde1e7;
+  --accent: #0f8f7d;
+  --accent-soft: #dcf3ef;
+  --first: #c97a1f;
+  --first-soft: #fbe8d2;
+  --rest: #d7dde3;
+  --code-bg: #1c2129;
+  --code-text: #d6deeb;
+  --code-highlight: #26343a;
+  --code-highlight-edge: #0f8f7d;
+  --ok: #1f8a4c;
+  --warn: #b45309;
+  --shadow: 0 1px 2px rgba(20, 20, 30, 0.06), 0 8px 20px rgba(20, 20, 30, 0.05);
+}
+:root[data-theme="dark"] {
+  --bg: #0e1013;
+  --panel: #171a1f;
+  --panel-alt: #1d2127;
+  --text: #e6e9ee;
+  --muted: #8b93a1;
+  --border: #2a2f37;
+  --accent: #5ee6d1;
+  --accent-soft: rgba(94, 230, 209, 0.12);
+  --first: #ffb454;
+  --first-soft: rgba(255, 180, 84, 0.14);
+  --rest: #333a44;
+  --code-bg: #0a0c10;
+  --code-text: #cdd6e4;
+  --code-highlight: rgba(94, 230, 209, 0.12);
+  --code-highlight-edge: #5ee6d1;
+  --ok: #6fdc8c;
+  --warn: #f2a65a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Material Symbols — herdam color/currentColor por serem texto (glifo),
+   então não precisam de fill/stroke como os SVGs que substituem.
+   font-variation-settings mantém peso/preenchimento consistentes
+   independente de o navegador aplicar font-weight herdado do botão. */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  display: inline-flex;
+  vertical-align: -3px;
+  user-select: none;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 20;
+}
+.theme-btn .material-symbols-outlined {
+  margin-right: 4px;
+}
+
+body {
+  font-family: "IBM Plex Sans", Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 20px 16px 40px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 14px;
+  font-size: 13.5px;
+}
+.subtitle a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.subtitle a:hover {
+  text-decoration: underline;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.theme-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  box-shadow: var(--shadow);
+}
+.theme-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 12px 0;
+  box-shadow: var(--shadow);
+}
+.panel h3 {
+  margin: 0 0 12px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Fase / narrativa — a "barra de status" do debugger */
+.phase-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.narrative {
+  font-size: 15px;
+  margin-top: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.event-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 2px;
+}
+.event-icon svg {
+  display: block;
+}
+.narrative b {
+  color: var(--accent);
+  font-weight: 600;
+}
+.narrative code {
+  font-family: "IBM Plex Mono", monospace;
+  background: var(--accent-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+
+/* Lista — elementos exibidos como pequenos registradores de memória */
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.box {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  font-size: 15px;
+  color: #14171c;
+  transition:
+    transform 0.25s,
+    outline 0.15s;
+  position: relative;
+}
+.first {
+  background: var(--first);
+}
+.rest {
+  background: var(--rest);
+  color: var(--text);
+}
+.current-frame-list .box {
+  animation: pop 0.3s ease;
+}
+@keyframes pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0.3;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.legend {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+}
+.legend span.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* Código — editor real, linha ativa = breakpoint */
+.code {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 13.5px;
+}
+.codeline {
+  display: flex;
+  padding: 3px 10px;
+  white-space: pre;
+  border-left: 3px solid transparent;
+}
+.codeline .ln {
+  width: 22px;
+  color: #5a6272;
+  user-select: none;
+  flex-shrink: 0;
+}
+.codeline.active {
+  background: var(--code-highlight);
+  border-left-color: var(--code-highlight-edge);
+}
+.codeline.active .ln {
+  color: var(--code-highlight-edge);
+  font-weight: 700;
+}
+.codeline.active::before {
+  content: "●";
+  color: var(--code-highlight-edge);
+  margin-right: 8px;
+  font-size: 9px;
+  align-self: center;
+}
+.codeline:not(.active)::before {
+  content: "";
+  margin-right: 17px;
+}
+.code .kw {
+  color: #c586c0;
+}
+.code .ty {
+  color: #4ec9b0;
+}
+
+/* Pilha de chamadas — desenhada como pilha física: o frame atual
+   fica nítido e em primeiro plano; os demais recuam (leve escala
+   e opacidade reduzida), como se estivessem "embaixo" na pilha. */
+.stack-frames {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 7px;
+}
+.frame-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 11px;
+  background: var(--panel-alt);
+  animation: slideIn 0.28s ease;
+  font-size: 13px;
+  transform-origin: center top;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.frame-card:not(.current) {
+  opacity: 0.62;
+  transform: scale(0.98);
+}
+.frame-card.current {
+  border-color: var(--accent);
+  border-left-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.frame-title {
+  display: flex;
+  justify-content: space-between;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.frame-title .depth-tag {
+  color: var(--muted);
+  font-weight: normal;
+  font-size: 11.5px;
+}
+.frame-vars {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+}
+.frame-vars .k {
+  color: var(--muted);
+}
+.frame-vars .v {
+  color: var(--text);
+}
+.pending {
+  color: var(--warn);
+  font-style: italic;
+}
+.resolved {
+  color: var(--ok);
+  font-weight: bold;
+}
+
+/* Expressão recursiva */
+.expr-box {
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 14px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.expr-box .final {
+  color: var(--ok);
+  font-weight: bold;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  margin: 4px 0;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--accent);
+  margin-top: -5px;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+#speed {
+  width: 110px;
+}
+
+/* ------------------------------------------------------------------
+   TraceViewer — o toolbar (fase + navegação + contador + narrativa)
+   é o cabeçalho compartilhado de todo o componente, não mais algo
+   embutido no painel de Código: Voltar/Avançar/slider controlam
+   Código, Pilha, Lista e Expressão ao mesmo tempo, então vivem aqui,
+   um nível acima desses painéis (mesma relação de posse que o objeto
+   TraceViewer tem sobre trace/step em app.js).
+
+   toolbar-row tem três papéis lado a lado:
+     1. phase-pill: fase atual da execução.
+     2. step-group: a única ação real do TraceViewer (Voltar/Avançar).
+        Avançar nunca encolhe nem desaparece; Voltar é claramente
+        subordinado a ele, não um par simétrico.
+     3. count: leitura factual de posição ("Estado X de Y") — sem cor,
+        sem ícone, sem relação com a fase (isso já vive no phase-pill
+        / narrative). Curto e fixo por construção, nunca precisa
+        ceder, por isso fica na ponta.
+
+   Run (execução automática) foi removido — só existia a navegação
+   passo a passo mesmo, então o modo à parte não compensava a
+   complexidade extra no toolbar.
+   ------------------------------------------------------------------ */
+/* Sem display:flex de propósito: .trace-viewer é só um agrupador
+   semântico (equivalente ao objeto TraceViewer em app.js), não uma
+   grade de layout. Como <section> já é block por padrão, as margens
+   verticais de .panel (12px 0) continuam colapsando entre irmãos
+   exatamente como antes de existir este wrapper — um <section> flex
+   quebraria esse colapso e dobraria o espaçamento vertical entre
+   toolbar/grid/lista/expressão.
+   ------------------------------------------------------------------ */
+
+.trace-toolbar .toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* Dentro do toolbar o step-group já está numa linha compartilhada com
+   phase-pill/count, então não precisa da margem inferior que fazia
+   sentido quando ele era uma linha própria acima do código. */
+.trace-toolbar .step-group {
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .trace-toolbar .toolbar-row {
+    justify-content: flex-start;
+  }
+}
+
+button.ctrl {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+button.ctrl:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+button.ctrl:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Passo a passo: Avançar domina, Voltar é claramente subordinado —
+   não um par simétrico dentro de um segmented-control. Linha própria,
+   com a mesma margem inferior que o header tinha antes de o count sair
+   dele, para manter o ritmo vertical do painel. */
+.step-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+button.step-back {
+  background: var(--panel-alt);
+  color: var(--muted);
+  padding: 7px 9px;
+  display: flex;
+  align-items: center;
+}
+.step-back .material-symbols-outlined {
+  margin: 0;
+}
+button.step-forward {
+  background: var(--accent);
+  color: var(--bg);
+  padding: 8px 16px 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.step-forward .material-symbols-outlined {
+  margin: 0 2px 0 0;
+}
+
+/* Em telas estreitas, o rótulo textual do Avançar é o primeiro a
+   ceder (o botão continua grande e óbvio, só perde o texto) — assim
+   step-forward nunca precisa encolher de verdade. */
+@media (max-width: 560px) {
+  .step-forward-label {
+    display: none;
+  }
+  .step-forward {
+    padding: 8px 12px;
+  }
+}
+
+/* Contador — leitura factual e muda: posição na execução, não fase
+   (fase já vive no phase-pill / narrative). Sem cor de destaque, sem
+   ícone: propositalmente não compete por atenção. Vive no toolbar
+   compartilhado do TraceViewer (.trace-toolbar .toolbar-row), ao lado
+   do step-group — não mais dentro do painel de Código. */
+.count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Classe utilitária para o <input id="slider">: app.js ainda grava
+   .max/.value nele (regenerate/render/onSlider), mas a navegação
+   visível agora é só o step-group (Voltar/Avançar). O antigo
+   #speedLabel que também usava esta classe foi removido junto com a
+   escrita correspondente em app.js — não havia mais nada lendo ou
+   exibindo aquele valor (ver decisão de não ter legenda/detalhe de
+   velocidade separada dos três presets). */
+.visually-hidden-slider {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Config de lista */
+.config {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.config input[type="text"] {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  color: var(--text);
+  font-family: "IBM Plex Mono", monospace;
+  width: 220px;
+}
+.config .err {
+  color: #c62828;
+  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+}
+.config .field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.config .field label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "IBM Plex Mono", monospace;
+}
+.config .field input[type="text"] {
+  width: 180px;
+}
+
+/* Piso de qualidade: menos movimento para quem pediu */
+@media (prefers-reduced-motion: reduce) {
+  .current-frame-list .box,
+  .frame-card,
+  .theme-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}

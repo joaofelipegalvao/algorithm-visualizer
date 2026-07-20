@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visualizador de algoritmos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-theme-root>
+    <div class="wrap">
+      <div class="topbar">
+        <div>
+          <h2 id="examTitle">Visualizador de algoritmos</h2>
+          <p class="subtitle" id="examSubtitle">Carregando algoritmo…</p>
+        </div>
+        <button class="theme-btn" id="themeBtn">
+          <span
+            class="material-symbols-outlined"
+            id="themeIcon"
+            aria-hidden="true"
+            >dark_mode</span
+          >
+          <span id="themeLabel">Modo escuro</span>
+        </button>
+      </div>
+
+      <div class="panel">
+        <h3>Configurar algoritmo</h3>
+        <div class="config" id="configFields">
+          <!-- preenchido por app.js a partir de ENGINE.input.schema -->
+        </div>
+        <div class="config" style="margin-top: 8px">
+          <button class="ctrl" id="btnRegenerate">Gerar visualização</button>
+          <span class="err" id="listErr"></span>
+        </div>
+      </div>
+
+      <section class="trace-viewer" id="traceViewer">
+        <div class="panel trace-toolbar">
+          <div class="toolbar-row">
+            <span class="phase-pill" id="phase"></span>
+            <div class="step-group">
+              <button
+                class="ctrl step-back"
+                id="btnPrev"
+                title="Passo anterior"
+                aria-label="Passo anterior"
+              >
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button
+                class="ctrl step-forward"
+                id="btnNext"
+                title="Avançar"
+                aria-label="Avançar"
+              >
+                <span class="material-symbols-outlined">chevron_right</span>
+                <span class="step-forward-label">Avançar</span>
+              </button>
+            </div>
+            <span class="count" id="count"></span>
+          </div>
+          <div class="narrative" id="msg">
+            <span class="event-icon" id="msgIcon" aria-hidden="true"></span>
+            <span id="msgText"></span>
+          </div>
+          <input
+            type="range"
+            id="slider"
+            min="0"
+            max="0"
+            value="0"
+            class="visually-hidden-slider"
+            tabindex="-1"
+          />
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <h3>Código (linha atual em destaque)</h3>
+            <div class="code" id="codeBox"></div>
+          </div>
+          <div class="panel">
+            <h3>Pilha de chamadas / frames de memória</h3>
+            <div class="stack-frames" id="stackBox"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Lista da chamada atual</h3>
+          <div class="row" id="list"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Expressão recursiva (construção e redução)</h3>
+          <div class="expr-box" id="exprBox"></div>
+        </div>
+      </section>
+
+      <p class="subtitle" style="margin-top: 18px">
+        <a href="../index.html">← Voltar ao catálogo</a>
+      </p>
+    </div>
+
+    <script src="../manifest.js"></script>
+    <script type="module">
+      const params = new URLSearchParams(location.search);
+      const id = params.get("algoritmo");
+      const item =
+        ALGORITHM_MANIFEST.find((e) => e.id === id) || ALGORITHM_MANIFEST[0];
+
+      if (!item) {
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          '<p style="padding:20px">Nenhum algoritmo encontrado em manifest.js.</p>',
+        );
+      } else {
+        const engineMod = await import(`../${item.engine}`);
+        const { initApp } = await import("./app.js");
+        initApp(engineMod.ENGINE);
+      }
+    </script>
+  </body>
+</html>

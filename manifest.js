@@ -1,0 +1,44 @@
+const ALGORITHM_MANIFEST = [
+  {
+    id: "recursive-count",
+    language: "rust",
+    title: "Recursive Count",
+    engine: "algorithms/rust/recursive-count/engine.js",
+    source: "algorithms/rust/recursive-count/source.rs",
+  },
+  {
+    id: "factorial",
+    language: "rust",
+    title: "Recursive Factorial",
+    engine: "algorithms/rust/recursive-factorial/engine.js",
+    source: "algorithms/rust/recursive-factorial/source.rs",
+  },
+  {
+    id: "recursive-sum",
+    language: "rust",
+    title: "Recursive Sum",
+    engine: "algorithms/rust/recursive-sum/engine.js",
+    source: "algorithms/rust/recursive-sum/source.rs",
+  },
+  {
+    id: "call-stack",
+    language: "rust",
+    title: "Call Stack",
+    engine: "algorithms/rust/call-stack/engine.js",
+    source: "algorithms/rust/call-stack/source.rs",
+  },
+  {
+    id: "max-element",
+    language: "rust",
+    title: "Maximum Element",
+    engine: "algorithms/rust/max-element/engine.js",
+    source: "algorithms/rust/max-element/source.rs",
+  },
+  {
+    id: "binary-search",
+    language: "rust",
+    title: "Recursive Binary Search",
+    engine: "algorithms/rust/binary-search/engine.js",
+    source: "algorithms/rust/binary-search/source.rs",
+  },
+];
