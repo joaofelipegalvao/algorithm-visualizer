@@ -138,6 +138,15 @@ pelo schema). Devolve:
   }
   ```
 
+> **Nota sobre `TraceElement.id`:** atualmente o `id` é derivado da
+> posição (`String(idx)`) e permanece estável enquanto a ordem
+> relativa dos elementos não muda entre passos, o que cobre todos os
+> algoritmos atuais. Não há garantia de que ele permaneça estável em
+> algoritmos que reordenam elementos (como quicksort ou mergesort).
+> Caso uma identidade persistente através de swaps ou partições seja
+> necessária no futuro, cada engine poderá adotar uma estratégia
+> diferente de geração do `id`, preservando o contrato (`id: string`).
+
 - `tree`: árvore de chamadas via `node.children` (nunca `childId =
 frameId + 1` — isso quebraria em algoritmos com mais de uma chamada
   recursiva por frame, ex. quicksort/mergesort/Fibonacci, que o design
