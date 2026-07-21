@@ -108,6 +108,7 @@ function buildTrace(inputs) {
   const callStack = [];
   let root = null;
 
+  /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
       title: `maior([${f.list.join(", ")}])`,
@@ -119,13 +120,12 @@ function buildTrace(inputs) {
         {
           k: "sub_maior",
           v: f.subMaior === null ? null : String(f.subMaior),
-          pending: f.subMaior === null,
+          status: f.subMaior === null ? "pending" : "active",
         },
         {
           k: "resultado",
           v: f.resultado === null ? null : String(f.resultado),
-          pending: f.resultado === null,
-          emphasis: f.resultado === null ? null : "resolved",
+          status: f.resultado === null ? "pending" : "resolved",
         },
       ],
     }));

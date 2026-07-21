@@ -275,12 +275,12 @@ const TraceViewer = {
         const vSpan = document.createElement("span");
         vSpan.className =
           "v" +
-          (v.pending
+          (v.status === "pending"
             ? " pending"
-            : v.emphasis === "resolved"
+            : v.status === "resolved"
               ? " resolved"
               : "");
-        vSpan.textContent = v.pending ? "aguardando…" : v.v;
+        vSpan.textContent = v.status === "pending" ? "aguardando…" : v.v;
 
         varsDiv.appendChild(kSpan);
         varsDiv.appendChild(vSpan);

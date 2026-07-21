@@ -16,7 +16,8 @@ export function elementsForHeadTail(list) {
   return list.map((v, idx) => ({
     text: String(v),
     role: idx === 0 ? "primary" : "secondary",
-    status: "current",
+    status: "active",
+    id: String(idx),
   }));
 }
 

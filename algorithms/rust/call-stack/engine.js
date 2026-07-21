@@ -80,7 +80,9 @@ function buildTrace(inputs) {
   }
 
   function elementsFor(showNome) {
-    return showNome ? [{ text: nome, role: "primary", status: "current" }] : [];
+    return showNome
+      ? [{ text: nome, role: "primary", status: "active", id: "0" }]
+      : [];
   }
 
   function pushFrame(title, depth, vars) {

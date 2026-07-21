@@ -101,15 +101,21 @@ dicionário `EVENT_ICON` + aliases que crescia a cada engine novo — o
 shell só lê `ENGINE.events[step.event]?.icon`, nunca precisa conhecer
 os eventos de nenhum algoritmo específico.
 
-> **Hipótese em aberto:** o vocabulário visual do contrato hoje só tem
-> dois campos por elemento — `role` (`primary`/`secondary`, únicos
-> valores que `app.js`/`ROLE_CLASS` entendem) e `status` (declarado em
-> todo `element`, mas **nunca lido** por `render()` hoje — sempre
-> `"current"`). Algoritmos de partição (quicksort) provavelmente vão
-> precisar de um terceiro papel visual (ex.: o pivô). Antes de abrir
-> esse vocabulário, decidir se isso é um `role` novo ou se `status`
-> passa a ser lido de fato — só decidir isso com quicksort implementado
-> e a partição na tela, não especulativamente.
+> **Hipótese em aberto:** desde a unificação do `StatusToken`
+> (`types/engine.d.ts`), `elements[].status` e `stack[].vars[].status`
+> compartilham o mesmo vocabulário fechado (`neutral`/`pending`/
+> `active`/`resolved`). Hoje só `stack[].vars[].status` tem consumidor
+> visual (`.pending`/`.resolved`/`.expr-box .final` em `style.css`,
+> ligados aos tokens `--state-*`) — `elements[].status` é sempre
+> `"active"` em todo algoritmo atual e não tem nenhum tratamento visual
+> em `.box`; só `role` (`--first`/`--rest`) pinta a lista. Quando um
+> algoritmo produzir elementos com `status` variando de verdade num
+> mesmo passo (candidato: quicksort, comparando vários elementos ao
+> pivô ao mesmo tempo), `role` e `status` devem ocupar canais visuais
+> independentes em `.box` — não decidir agora _qual_ canal (borda,
+> halo, animação etc.), só que não podem colidir no canal que `role`
+> já ocupa hoje (`background-color`). Decidir o canal só com o caso
+> real na tela, não especulativamente.
 
 ### `buildTrace(inputs) => { steps, tree }`
 
@@ -126,8 +132,8 @@ pelo schema). Devolve:
     line: number,        // 1-index em ENGINE.code.lines
     depth: number | null, // null = fora de qualquer frame (ex.: wrapper)
     frameId: number | null,
-    stack: [{ title, depth, vars: [{k, v, pending?, emphasis?}] }],
-    elements: [{ text, role, status }],
+    stack: [{ title, depth, vars: [{k, v, status?}] }],
+    elements: [{ text, role, status, id }],
     payload: object,      // dado bruto, consumido por ENGINE.messages[event]
   }
   ```

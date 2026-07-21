@@ -83,6 +83,7 @@ function buildTrace(inputs) {
   const callStack = [];
   let root = null;
 
+  /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
       title: `fat(${f.x})`,
@@ -92,13 +93,12 @@ function buildTrace(inputs) {
         {
           k: "sub_fat",
           v: f.subFat === null ? null : String(f.subFat),
-          pending: f.subFat === null,
+          status: f.subFat === null ? "pending" : "active",
         },
         {
           k: "resultado",
           v: f.resultado === null ? null : String(f.resultado),
-          pending: f.resultado === null,
-          emphasis: f.resultado === null ? null : "resolved",
+          status: f.resultado === null ? "pending" : "resolved",
         },
       ],
     }));
@@ -106,10 +106,11 @@ function buildTrace(inputs) {
 
   /** @returns {TraceElement[]} */
   function elementsFor(currentX) {
-    return chain.map((v) => ({
+    return chain.map((v, idx) => ({
       text: String(v),
       role: v === currentX ? "primary" : "secondary",
-      status: "current",
+      status: "active",
+      id: String(idx),
     }));
   }
 

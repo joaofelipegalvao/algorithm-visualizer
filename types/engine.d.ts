@@ -29,6 +29,14 @@ interface CodeBlock {
 
 type ElementRole = "primary" | "secondary";
 
+// Vocabulário fechado de estado temporal de execução (ver docs/ENGINE.md).
+// Substitui dois mecanismos hoje redundantes: TraceElement.status (sempre
+// "current", nunca lido por render()) e StackVar.pending/emphasis.
+// Deliberadamente sem "discarded": esse valor só entra quando algum
+// algoritmo passar a representar elementos eliminados na tela (ex.
+// busca binária mantendo a metade descartada visível) — não antes.
+type StatusToken = "neutral" | "pending" | "active" | "resolved";
+
 interface LegendEntry {
   role: ElementRole;
   status: string;
@@ -48,14 +56,14 @@ type EngineEvents = Record<string, EventDef>;
 interface TraceElement {
   text: string;
   role: ElementRole;
-  status: string;
+  status: StatusToken;
+  id: string;
 }
 
 interface StackVar {
   k: string;
   v: string | null;
-  pending?: boolean;
-  emphasis?: string | null;
+  status?: StatusToken;
 }
 
 interface StackFrame {

@@ -162,6 +162,7 @@ function buildTrace(inputs) {
   const callStack = [];
   let root = null;
 
+  /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
       title: `busca_binaria_com_offset([${f.list.join(", ")}], ${alvo}, ${f.offset})`,
@@ -172,13 +173,12 @@ function buildTrace(inputs) {
         {
           k: "meio",
           v: f.meio === null ? null : String(f.meio),
-          pending: f.meio === null,
+          status: f.meio === null ? "pending" : "active",
         },
         {
           k: "resultado",
           v: f.resultado === undefined ? null : formatResultado(f.resultado),
-          pending: f.resultado === undefined,
-          emphasis: f.resultado === undefined ? null : "resolved",
+          status: f.resultado === undefined ? "pending" : "resolved",
         },
       ],
     }));
@@ -188,7 +188,8 @@ function buildTrace(inputs) {
     return list.map((v, idx) => ({
       text: String(v),
       role: idx === meioIdx ? "primary" : "secondary",
-      status: "current",
+      status: "active",
+      id: String(idx),
     }));
   }
 
