@@ -41,4 +41,11 @@ const ALGORITHM_MANIFEST = [
     engine: "algorithms/rust/binary-search/engine.js",
     source: "algorithms/rust/binary-search/source.rs",
   },
+  {
+    id: "fibonacci",
+    language: "rust",
+    title: "Fibonacci (naive recursion)",
+    engine: "algorithms/rust/fibonacci/engine.js",
+    source: "algorithms/rust/fibonacci/source.rs",
+  },
 ];
