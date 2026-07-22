@@ -237,18 +237,44 @@ stack/elements/payload`, `messages`, `buildTrace`, `buildExpression`.
 Ordem sugerida ao adicionar algoritmos, do que menos tensiona o
 contrato pro que mais tensiona:
 
-1. **Fibonacci ingênuo** — `node.children` com múltiplos filhos +
-   volume grande de steps (testa a timeline com milhares de passos).
-   Barato de implementar, dois sinais de uma vez.
+1. ~~**Fibonacci ingênuo**~~ — **validado.** `node.children` com dois
+   filhos reais por frame (12 nós com `children.length === 2` para
+   `n=6`, decorrência da própria recorrência de Fibonacci, não do
+   engine) e `buildExpression` combinando dois ramos, incluindo os
+   estados intermediários (0, 1 ou 2 filhos presentes, já que as duas
+   chamadas acontecem em sequência, nunca simultaneamente). Zero
+   mudança em `app.js`, `engine-kit.js` ou `types/engine.d.ts` — só
+   arquivos novos em `algorithms/rust/fibonacci/` + uma entrada em
+   `manifest.js`. A hipótese sobre `children` fica encerrada aqui: o
+   contrato só promete `TraceTreeNode[]`, sem afirmar nada sobre
+   contagem ou proveniência dos elementos, e isso já foi exercitado.
+   Nota à parte, fora do contrato: a ordem de `children` carrega
+   significado posicional no `exprFor` de Fibonacci (`children[0]` =
+   ramo `fib(n-1)`, `children[1]` = ramo `fib(n-2)`) por causa da
+   ordem sequencial das chamadas — implícito, não declarado no tipo,
+   mesma categoria da nota já existente sobre `TraceElement.id`.
 2. **Quicksort** — provável primeira fricção real de vocabulário
    visual (`role`/`status` — ver hipótese acima).
 3. **Mergesort** — fase de combinação de duas recursões.
-4. **DFS** — árvore/grafo arbitrário; deve caber sem fricção (mesmo
-   modelo de pilha de chamadas).
-5. **BFS** — candidato a genuinamente não caber: não é recursivo, não
-   tem pilha, tem fila. Se aparecer `if (algorithm === "bfs")` em
-   `app.js`, isso não é falha de arquitetura — é o sinal de decidir se
-   o projeto é "visualizador de recursão" ou "visualizador de
-   algoritmos" em geral. (Essa última pergunta já é mais de
-   arquitetura do que de contrato — ver também ARCHITECTURE.md se
-   isso avançar.)
+4. **DFS** — árvore/grafo arbitrário. Não acrescenta evidência nova
+   sobre o contrato: `children: TraceTreeNode[]` já foi validado por
+   Fibonacci com N conhecido; DFS com N variável em tempo de execução
+   ainda seria só uma segunda *implementação* de `exprFor`/
+   `snapshotStack` (código local do engine), não um teste adicional
+   do tipo. Deve caber sem fricção — é confirmação, não pressão.
+5. **BFS** — hipótese em aberto: verificar se algoritmos iterativos
+   baseados em fila continuam cabendo no contrato atual (`TraceStep`,
+   `stack`, `frameId`) sem alterações no shell. O motivo de tensão não
+   é grau de ramificação (isso Fibonacci já resolveu) — é que BFS não
+   é recursivo, não tem pilha de chamadas, tem fila: `frameId: number
+   | null` pressupõe um frame ativo por vez (verdade só porque toda
+   recursão até aqui é síncrona de thread única) e `stack:
+   StackFrame[]` pressupõe um caminho linear raiz→atual (verdade só
+   porque é uma pilha real). Qualquer necessidade de modificar
+   `types/engine.d.ts` ou `app.js` durante essa implementação deve
+   ser tratada como evidência contra a hipótese, e não corrigida
+   automaticamente — trazer o caso concreto para revisão antes de
+   generalizar qualquer mudança. Se isso acontecer, também é o sinal
+   de decidir se o projeto é "visualizador de recursão" ou
+   "visualizador de algoritmos" em geral (pergunta de arquitetura,
+   não de contrato — ver ARCHITECTURE.md se isso avançar).
