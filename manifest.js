@@ -48,4 +48,11 @@ const ALGORITHM_MANIFEST = [
     engine: "algorithms/rust/fibonacci/engine.js",
     source: "algorithms/rust/fibonacci/source.rs",
   },
+  {
+    id: "quicksort",
+    language: "rust",
+    title: "Quicksort (Lomuto partition)",
+    engine: "algorithms/rust/quicksort/engine.js",
+    source: "algorithms/rust/quicksort/source.rs",
+  },
 ];
