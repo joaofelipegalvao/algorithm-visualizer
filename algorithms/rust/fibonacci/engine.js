@@ -264,7 +264,44 @@ function buildTrace(inputs) {
 
 /** @returns {ExpressionResult} */
 function buildExpression(traceResult, stepIndex) {
-  return { nodes: ["…"] };
+  const { tree, steps } = traceResult;
+  const isFinal = stepIndex === steps.length - 1;
+
+  const resolvedIds = new Set();
+  for (let k = 0; k <= stepIndex; k++) {
+    const s = steps[k];
+    if (s.event === "base-return" || s.event === "combine") {
+      resolvedIds.add(s.frameId);
+    }
+  }
+
+  // Diferente dos engines com uma única recursão por frame: aqui
+  // node.children pode ter 0, 1 ou 2 elementos nesse ponto da
+  // execução, porque children.push acontece só quando rec() é
+  // chamado -- e as duas chamadas (fib(n-1), fib(n-2)) acontecem em
+  // sequência, nunca ao mesmo tempo. Cada ramo ainda não criado usa
+  // a chamada literal (n - 1 / n - 2) como fallback.
+  function exprFor(node) {
+    if (resolvedIds.has(node.id)) return String(node.resultado);
+    if (node.n <= 1) return `fib(${node.n})`;
+
+    const aExpr =
+      node.children.length >= 1
+        ? exprFor(node.children[0])
+        : `fib(${node.n - 1})`;
+    const bExpr =
+      node.children.length >= 2
+        ? exprFor(node.children[1])
+        : `fib(${node.n - 2})`;
+
+    return `(${aExpr} + ${bExpr})`;
+  }
+
+  const rhs = exprFor(tree);
+  const lhs = `fib(${tree.n}) = `;
+  return {
+    nodes: [lhs, isFinal ? { type: "strong", text: rhs, final: true } : rhs],
+  };
 }
 
 /** @type {Engine} */
