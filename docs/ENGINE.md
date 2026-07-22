@@ -147,6 +147,23 @@ pelo schema). Devolve:
 > necessária no futuro, cada engine poderá adotar uma estratégia
 > diferente de geração do `id`, preservando o contrato (`id: string`).
 
+> **Nota sobre `frameId`:** não é lido por `app.js` — é uma correlação
+> interna usada pelos engines recursivos para relacionar cada `step`
+> com o nó correspondente na árvore de chamadas (`tree`) durante
+> `buildExpression`, não uma fonte a partir da qual a árvore é
+> construída. Faz parte do contrato de `TraceStep` porque é o
+> mecanismo que o próprio engine usa para essa correlação, mas não é
+> uma dependência do shell.
+
+> **Hipótese em aberto sobre `depth`** (campo de `TraceStep`, distinto
+> de `stack[].depth`): nenhum consumidor foi encontrado até agora —
+> nem em `app.js`, nem em `engine-kit.js`, nem em nenhum `engine.js`
+> existente. É redundante com `stack[stack.length - 1].depth` no
+> modelo atual. Possíveis destinos: manter como campo reservado,
+> remover do contrato, ou documentar como uso futuro — nenhum foi
+> escolhido ainda. Não remover nem alterar o tipo até um caso concreto
+> demonstrar necessidade.
+
 - `tree`: árvore de chamadas via `node.children` (nunca `childId =
 frameId + 1` — isso quebraria em algoritmos com mais de uma chamada
   recursiva por frame, ex. quicksort/mergesort/Fibonacci, que o design
@@ -253,8 +270,17 @@ contrato pro que mais tensiona:
    ramo `fib(n-1)`, `children[1]` = ramo `fib(n-2)`) por causa da
    ordem sequencial das chamadas — implícito, não declarado no tipo,
    mesma categoria da nota já existente sobre `TraceElement.id`.
-2. **Quicksort** — provável primeira fricção real de vocabulário
-   visual (`role`/`status` — ver hipótese acima).
+2. **Quicksort** — hipótese em aberto: valida um eixo diferente do
+   que Fibonacci fechou. Fibonacci encerrou a hipótese da árvore
+   (`children`); Quicksort testa a representação de elementos
+   mutáveis — se `TraceElement.id` mantém identidade estável quando
+   um elemento muda de posição (ver nota acima), e se o vocabulário
+   fechado de `status` (`neutral`/`pending`/`active`/`resolved`, ver
+   hipótese do `StatusToken` acima) é suficiente para os estados que
+   o algoritmo produz, coexistindo com `role` sem colidir no mesmo
+   canal visual (`background-color`). Se a implementação revelar
+   insuficiência real em qualquer um desses pontos, isso justifica
+   revisão de `types/engine.d.ts`/`app.js`; até lá, nada é antecipado.
 3. **Mergesort** — fase de combinação de duas recursões.
 4. **DFS** — árvore/grafo arbitrário. Não acrescenta evidência nova
    sobre o contrato: `children: TraceTreeNode[]` já foi validado por
