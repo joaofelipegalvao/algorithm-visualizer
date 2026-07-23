@@ -182,6 +182,13 @@ function buildTrace(inputs) {
   // pressiona a hipótese registrada no ENGINE.md sobre `TraceElement.id`.
   const arrState = inputList.map((v, idx) => ({ value: v, id: String(idx) }));
 
+  // Identidades (TraceElement.id) já definitivamente posicionadas.
+  // `status: "resolved"` é estado persistente (nunca revertido), distinto
+  // de `role`, que reflete apenas o foco do passo atual. Um id entra aqui
+  // quando `place-pivot` o assenta em sua posição final, ou quando é
+  // caso-base de um único elemento (`baixo === alto`).
+  const resolvedIds = new Set();
+
   /**
    * @param {number[]} focus - índices em foco no passo atual (role: "primary")
    * @returns {TraceElement[]}
@@ -191,7 +198,7 @@ function buildTrace(inputs) {
     return arrState.map((cell, idx) => ({
       text: String(cell.value),
       role: focusSet.has(idx) ? "primary" : "secondary",
-      status: "active",
+      status: resolvedIds.has(cell.id) ? "resolved" : "active",
       id: cell.id,
     }));
   }
@@ -329,6 +336,7 @@ function buildTrace(inputs) {
       arrState[alto],
       arrState[posPivoFinal],
     ];
+    resolvedIds.add(arrState[posPivoFinal].id);
     steps.push({
       event: "place-pivot",
       phase: "DESCENDO",
@@ -401,6 +409,7 @@ function buildTrace(inputs) {
     });
 
     if (isBase) {
+      if (baixo === alto) resolvedIds.add(arrState[baixo].id);
       steps.push({
         event: "base-case",
         phase: "DESCENDO",

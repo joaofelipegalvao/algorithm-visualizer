@@ -213,7 +213,8 @@ const TraceViewer = {
     row.className = "row current-frame-list";
     s.elements.forEach((item) => {
       const box = document.createElement("div");
-      box.className = "box " + (ROLE_CLASS[item.role] || "rest");
+      const statusClass = item.status === "resolved" ? " resolved" : "";
+      box.className = "box " + (ROLE_CLASS[item.role] || "rest") + statusClass;
       box.textContent = item.text;
       row.appendChild(box);
     });

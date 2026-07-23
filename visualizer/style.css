@@ -260,6 +260,10 @@ h2 {
 .current-frame-list .box {
   animation: pop 0.3s ease;
 }
+.box.resolved {
+  outline: 2px solid var(--state-resolved);
+  outline-offset: -2px;
+}
 @keyframes pop {
   from {
     transform: scale(0.7);
