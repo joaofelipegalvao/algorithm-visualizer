@@ -260,9 +260,16 @@ h2 {
 .current-frame-list .box {
   animation: pop 0.3s ease;
 }
-.box.resolved {
-  outline: 2px solid var(--state-resolved);
-  outline-offset: -2px;
+.box.resolved::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--state-resolved);
+  opacity: 0.85;
 }
 @keyframes pop {
   from {
