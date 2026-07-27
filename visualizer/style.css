@@ -263,13 +263,13 @@ h2 {
 .box.resolved::after {
   content: "";
   position: absolute;
-  bottom: 3px;
-  right: 3px;
-  width: 6px;
-  height: 6px;
+  bottom: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--state-resolved);
-  opacity: 0.85;
+  background: currentColor;
+  opacity: 0.45;
 }
 @keyframes pop {
   from {
@@ -408,11 +408,11 @@ h2 {
 .frame-vars .v {
   color: var(--text);
 }
-.pending {
+.v.pending {
   color: var(--state-pending);
   font-style: italic;
 }
-.resolved {
+.v.resolved {
   color: var(--state-resolved);
   font-weight: bold;
 }
