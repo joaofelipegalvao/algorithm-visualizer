@@ -211,7 +211,7 @@ const TraceViewer = {
       iconEl.innerHTML = materialIcon("task_alt");
       renderNodesInto(
         /** @type {HTMLElement} */ (document.getElementById("msgText")),
-        "Execução concluída — nenhum passo restante.",
+        ["Execução concluída — nenhum passo restante."],
       );
       return;
     }
