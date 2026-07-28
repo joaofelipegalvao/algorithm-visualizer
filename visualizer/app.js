@@ -139,6 +139,34 @@ function materialIcon(name) {
 const ICON_MOON = "dark_mode";
 const ICON_SUN = "light_mode";
 
+/* ---------- Estado de exibição (shell) ----------
+ * Transforma o TraceStep "cru" produzido pelo engine em um TraceStep
+ * pronto para exibição. A trace em si (this.trace.steps) nunca é
+ * alterada -- isso é puramente um detalhe de shell, aplicado uma vez
+ * por render(), antes de chegar em qualquer renderizador.
+ *
+ * No último estado da trace, sintetiza um "estado final" genérico
+ * (não é conhecimento de nenhum algoritmo específico): pilha vazia e
+ * todos os elementos sem foco (role) e marcados como resolved. Fora
+ * disso, o TraceStep passa direto, sem cópia.
+ */
+function toDisplayStep(trace, step) {
+  const raw = trace.steps[step];
+  const isFinal = step === trace.steps.length - 1;
+  if (!isFinal) return raw;
+
+  return {
+    ...raw,
+    isFinal: true,
+    stack: [],
+    elements: raw.elements.map((el) => ({
+      ...el,
+      role: "secondary",
+      status: "resolved",
+    })),
+  };
+}
+
 /* ---------- TraceViewer ---------- */
 const TraceViewer = {
   /** @type {TraceResult | null} */
@@ -183,7 +211,7 @@ const TraceViewer = {
 
   render() {
     if (!this.trace || this.trace.steps.length === 0) return;
-    const s = this.trace.steps[this.step];
+    const s = toDisplayStep(this.trace, this.step);
 
     this.renderStatus(s);
     this.renderListPanel(s);
@@ -193,18 +221,10 @@ const TraceViewer = {
     this.renderTransport();
   },
 
-  // Genérico: verdadeiro no último estado de qualquer trace, de qualquer
-  // engine. Não é conhecimento específico de algoritmo — só "acabou".
-  isLastStep() {
-    return (
-      !!this.trace && this.step === this.trace.steps.length - 1
-    );
-  },
-
   renderStatus(s) {
     const phaseEl = /** @type {HTMLElement} */ (document.getElementById("phase"));
     const iconEl = /** @type {HTMLElement} */ (document.getElementById("msgIcon"));
-    if (this.isLastStep()) {
+    if (s.isFinal) {
       phaseEl.textContent = "concluído";
       phaseEl.classList.add("phase-pill-done");
       iconEl.classList.add("event-icon-done");
@@ -232,13 +252,10 @@ const TraceViewer = {
     clearEl(listEl);
     const row = document.createElement("div");
     row.className = "row current-frame-list";
-    const suppressFocus = this.isLastStep();
     s.elements.forEach((item) => {
       const box = document.createElement("div");
       const statusClass = item.status === "resolved" ? " resolved" : "";
-      const roleClass = suppressFocus
-        ? "rest"
-        : ROLE_CLASS[item.role] || "rest";
+      const roleClass = ROLE_CLASS[item.role] || "rest";
       box.className = "box " + roleClass + statusClass;
       box.textContent = item.text;
       row.appendChild(box);
