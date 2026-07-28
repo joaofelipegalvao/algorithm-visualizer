@@ -331,6 +331,14 @@ const TraceViewer = {
       card.appendChild(varsDiv);
       stackBox.appendChild(card);
     });
+
+    // .stack-frames usa column-reverse pra desenhar o frame atual no topo
+    // da pilha física. Com overflow-y: auto, scrollTop: 0 é o padrão do
+    // browser e mostra os frames mais ANTIGOS — o frame atual fica
+    // escondido acima, fora da área visível. Forçar um scrollTop bem
+    // negativo (o browser faz o clamp pro mínimo válido sozinho) ancora
+    // a visão no topo real do conteúdo, ou seja, no frame atual.
+    stackBox.scrollTop = -stackBox.scrollHeight;
   },
 
   renderExpressionPanel() {
