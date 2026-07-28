@@ -175,6 +175,12 @@ h2 {
   grid-template-columns: 1.15fr 1fr;
   gap: 12px;
 }
+/* Sem isso, o min-content de .codeline (white-space: pre, sem quebra)
+   propaga pra cima através do item de grid (que tem min-width: auto
+   por padrão) e estufa .grid > .wrap > body inteiro no mobile. */
+.grid > .panel {
+  min-width: 0;
+}
 
 @media (max-width: 760px) {
   .grid {
@@ -313,7 +319,8 @@ h2 {
   background: var(--code-bg);
   color: var(--code-text);
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   font-family: "IBM Plex Mono", "Consolas", monospace;
   font-size: 13.5px;
 }
@@ -624,7 +631,12 @@ button.step-forward {
    escrita correspondente em app.js — não havia mais nada lendo ou
    exibindo aquele valor (ver decisão de não ter legenda/detalhe de
    velocidade separada dos três presets). */
-.visually-hidden-slider {
+/* Qualificado com input[type="range"] (em vez de só .visually-hidden-slider)
+   para ter especificidade (0,2,1) maior que a regra genérica
+   input[type="range"] { width: 100%; } (0,1,1) — sem isso, o width:100%
+   vencia e o slider "oculto" continuava contribuindo pro scrollWidth
+   do documento mesmo com clip: rect(0,0,0,0). */
+input[type="range"].visually-hidden-slider {
   position: absolute;
   width: 1px;
   height: 1px;
