@@ -195,6 +195,10 @@ h2 {
   background: var(--state-active-soft);
   color: var(--state-active);
 }
+.phase-pill.phase-pill-done {
+  background: var(--state-resolved-soft);
+  color: var(--state-resolved);
+}
 .narrative {
   font-size: 15px;
   margin-top: 10px;
@@ -212,6 +216,9 @@ h2 {
   flex-shrink: 0;
   color: var(--state-active);
   margin-top: 2px;
+}
+.event-icon.event-icon-done {
+  color: var(--state-resolved);
 }
 .event-icon svg {
   display: block;

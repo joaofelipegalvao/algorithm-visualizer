@@ -193,12 +193,33 @@ const TraceViewer = {
     this.renderTransport();
   },
 
+  // Genérico: verdadeiro no último estado de qualquer trace, de qualquer
+  // engine. Não é conhecimento específico de algoritmo — só "acabou".
+  isLastStep() {
+    return (
+      !!this.trace && this.step === this.trace.steps.length - 1
+    );
+  },
+
   renderStatus(s) {
-    /** @type {HTMLElement} */ (document.getElementById("phase")).textContent =
-      s.phase;
+    const phaseEl = /** @type {HTMLElement} */ (document.getElementById("phase"));
+    const iconEl = /** @type {HTMLElement} */ (document.getElementById("msgIcon"));
+    if (this.isLastStep()) {
+      phaseEl.textContent = "concluído";
+      phaseEl.classList.add("phase-pill-done");
+      iconEl.classList.add("event-icon-done");
+      iconEl.innerHTML = materialIcon("task_alt");
+      renderNodesInto(
+        /** @type {HTMLElement} */ (document.getElementById("msgText")),
+        "Execução concluída — nenhum passo restante.",
+      );
+      return;
+    }
+    phaseEl.classList.remove("phase-pill-done");
+    iconEl.classList.remove("event-icon-done");
+    phaseEl.textContent = s.phase;
     const eventIcon = ENGINE.events && ENGINE.events[s.event]?.icon;
-    /** @type {HTMLElement} */ (document.getElementById("msgIcon")).innerHTML =
-      eventIcon ? materialIcon(eventIcon) : "";
+    iconEl.innerHTML = eventIcon ? materialIcon(eventIcon) : "";
     const narrative = ENGINE.messages[s.event](s.payload);
     renderNodesInto(
       /** @type {HTMLElement} */ (document.getElementById("msgText")),
@@ -211,10 +232,14 @@ const TraceViewer = {
     clearEl(listEl);
     const row = document.createElement("div");
     row.className = "row current-frame-list";
+    const suppressFocus = this.isLastStep();
     s.elements.forEach((item) => {
       const box = document.createElement("div");
       const statusClass = item.status === "resolved" ? " resolved" : "";
-      box.className = "box " + (ROLE_CLASS[item.role] || "rest") + statusClass;
+      const roleClass = suppressFocus
+        ? "rest"
+        : ROLE_CLASS[item.role] || "rest";
+      box.className = "box " + roleClass + statusClass;
       box.textContent = item.text;
       row.appendChild(box);
     });
