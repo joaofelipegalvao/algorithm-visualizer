@@ -186,6 +186,23 @@ h2 {
    por padrão) e estufa .grid > .wrap > body inteiro no mobile. */
 .grid > .panel {
   min-width: 0;
+  /* Os dois painéis da linha (código e pilha) ganham a MESMA altura
+     fixa, cada um rolando por dentro. Antes, o painel mais baixo
+     esticava (stretch) até a altura do mais alto e sobrava espaço em
+     branco dentro do card; com align-items: start sozinho, o painel
+     mais baixo parava de esticar mas deixava um buraco vazio na
+     "trilha" do grid (a altura da linha do grid é sempre a do maior
+     item, com ou sem stretch). Altura fixa nos dois elimina as duas
+     versões do problema: as bordas dos dois cards sempre terminam no
+     mesmo lugar, e cada um rola o próprio conteúdo internamente. */
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+.grid > .panel > .code,
+.grid > .panel > .stack-frames {
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 760px) {
@@ -326,7 +343,7 @@ h2 {
   color: var(--code-text);
   border-radius: 8px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
   font-family: "IBM Plex Mono", "Consolas", monospace;
   font-size: 13.5px;
 }
@@ -375,7 +392,6 @@ h2 {
   display: flex;
   flex-direction: column-reverse;
   gap: 7px;
-  max-height: 420px;
   overflow-y: auto;
 }
 .frame-card {
