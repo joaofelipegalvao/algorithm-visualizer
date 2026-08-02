@@ -1,8 +1,6 @@
 /** @type {Engine} */
 let ENGINE;
 
-const ROLE_CLASS = { primary: "first", secondary: "rest" };
-
 document.documentElement.setAttribute("data-theme", "light");
 
 /* ---------- Helpers de renderização segura (sem HTML de dados) ---------- */
@@ -159,11 +157,6 @@ function toDisplayStep(trace, step) {
     ...raw,
     isFinal: true,
     stack: [],
-    elements: raw.elements.map((el) => ({
-      ...el,
-      role: "secondary",
-      status: "resolved",
-    })),
   };
 }
 
@@ -214,7 +207,6 @@ const TraceViewer = {
     const s = toDisplayStep(this.trace, this.step);
 
     this.renderStatus(s);
-    this.renderListPanel(s);
     this.renderCodePanel(s);
     this.renderCallStackPanel(s);
     this.renderExpressionPanel();
@@ -245,22 +237,6 @@ const TraceViewer = {
       /** @type {HTMLElement} */ (document.getElementById("msgText")),
       narrative,
     );
-  },
-
-  renderListPanel(s) {
-    const listEl = /** @type {HTMLElement} */ (document.getElementById("list"));
-    clearEl(listEl);
-    const row = document.createElement("div");
-    row.className = "row current-frame-list";
-    s.elements.forEach((item) => {
-      const box = document.createElement("div");
-      const statusClass = item.status === "resolved" ? " resolved" : "";
-      const roleClass = ROLE_CLASS[item.role] || "rest";
-      box.className = "box " + roleClass + statusClass;
-      box.textContent = item.text;
-      row.appendChild(box);
-    });
-    listEl.appendChild(row);
   },
 
   renderCodePanel(s) {
@@ -366,7 +342,7 @@ const TraceViewer = {
   },
 };
 
-/* ---------- Meta e legenda ---------- */
+/* ---------- Meta ---------- */
 function initMeta() {
   document.title = ENGINE.meta.title;
   /** @type {HTMLElement} */ (
@@ -375,22 +351,6 @@ function initMeta() {
   /** @type {HTMLElement} */ (
     document.getElementById("examSubtitle")
   ).textContent = ENGINE.meta.subtitle;
-}
-
-function renderLegend() {
-  const legendEl = /** @type {HTMLElement} */ (
-    document.getElementById("legend")
-  );
-  clearEl(legendEl);
-  ENGINE.visualization.legend.forEach((item) => {
-    const swatch = document.createElement("span");
-    swatch.className = "swatch";
-    swatch.style.background =
-      "var(--" + (ROLE_CLASS[item.role] || "rest") + ")";
-    legendEl.appendChild(swatch);
-    legendEl.appendChild(document.createTextNode(item.label));
-    legendEl.appendChild(document.createTextNode("\u00A0\u00A0"));
-  });
 }
 
 /* ---------- Tema claro/escuro ---------- */
@@ -500,7 +460,6 @@ export function initApp(engine) {
   validateEngine();
   initMeta();
   buildConfigForm();
-  renderLegend();
   wireEvents();
   TraceViewer.regenerate();
 }

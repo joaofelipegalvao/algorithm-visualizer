@@ -89,8 +89,6 @@ function buildTrace(inputs) {
       depth: f.depth,
       vars: [
         { k: "lista", v: `[${f.list.join(", ")}]` },
-        { k: "primeiro", v: String(f.list[0]) },
-        { k: "resto", v: `[${f.list.slice(1).join(", ")}]` },
         {
           k: "sub_soma",
           v: f.subSoma === null ? null : String(f.subSoma),
