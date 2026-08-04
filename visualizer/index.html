@@ -35,7 +35,7 @@
         <div class="config" id="configFields">
           <!-- preenchido por app.js a partir de ENGINE.input.schema -->
         </div>
-        <div class="config" style="margin-top: 8px">
+        <div class="config mt-sm">
           <button class="ctrl" id="btnRegenerate">Gerar visualização</button>
           <span class="err" id="listErr"></span>
         </div>
@@ -95,7 +95,7 @@
         </div>
       </section>
 
-      <p class="subtitle" style="margin-top: 18px">
+      <p class="subtitle mt-lg">
         <a href="../index.html">← Voltar ao catálogo</a>
       </p>
     </div>
@@ -110,7 +110,7 @@
       if (!item) {
         document.body.insertAdjacentHTML(
           "beforeend",
-          '<p style="padding:20px">Nenhum algoritmo encontrado em manifest.js.</p>',
+          '<p class="notice">Nenhum algoritmo encontrado em manifest.js.</p>',
         );
       } else {
         const engineMod = await import(`../${item.engine}`);

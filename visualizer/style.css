@@ -615,6 +615,17 @@ button.step-forward {
   flex-shrink: 0;
 }
 
+/* Utilitárias de espaçamento — substituem margin-top inline no HTML */
+.mt-sm {
+  margin-top: 8px;
+}
+.mt-lg {
+  margin-top: 18px;
+}
+.notice {
+  padding: 20px;
+}
+
 /* Config de lista */
 .config {
   display: flex;

@@ -133,7 +133,11 @@ function buildConfigForm() {
 }
 
 function materialIcon(name) {
-  return `<span class="material-symbols-outlined" aria-hidden="true">${name}</span>`;
+  const span = document.createElement("span");
+  span.className = "material-symbols-outlined";
+  span.setAttribute("aria-hidden", "true");
+  span.textContent = name;
+  return span;
 }
 
 const ICON_MOON = "dark_mode";
@@ -222,7 +226,8 @@ const TraceViewer = {
       phaseEl.textContent = "concluído";
       phaseEl.classList.add("phase-pill-done");
       iconEl.classList.add("event-icon-done");
-      iconEl.innerHTML = materialIcon("task_alt");
+      clearEl(iconEl);
+      iconEl.appendChild(materialIcon("task_alt"));
       renderNodesInto(
         /** @type {HTMLElement} */ (document.getElementById("msgText")),
         ["Execução concluída — nenhum passo restante."],
@@ -233,7 +238,8 @@ const TraceViewer = {
     iconEl.classList.remove("event-icon-done");
     phaseEl.textContent = s.phase;
     const eventIcon = ENGINE.events && ENGINE.events[s.event]?.icon;
-    iconEl.innerHTML = eventIcon ? materialIcon(eventIcon) : "";
+    clearEl(iconEl);
+    if (eventIcon) iconEl.appendChild(materialIcon(eventIcon));
     const narrative = ENGINE.messages[s.event](s.payload);
     renderNodesInto(
       /** @type {HTMLElement} */ (document.getElementById("msgText")),
