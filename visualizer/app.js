@@ -303,7 +303,9 @@ const TraceViewer = {
       titleSpan.textContent = frame.title;
       const depthSpan = document.createElement("span");
       depthSpan.className = "depth-tag";
-      depthSpan.textContent = `profundidade ${frame.depth}`;
+      depthSpan.textContent = isCurrent
+        ? `profundidade ${frame.depth} · atual`
+        : `profundidade ${frame.depth}`;
       titleDiv.appendChild(titleSpan);
       titleDiv.appendChild(depthSpan);
       card.appendChild(titleDiv);
