@@ -10,11 +10,12 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="../theme.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body data-theme-root>
     <div class="wrap">
-      <div class="topbar">
+      <header class="topbar">
         <div>
           <h1 id="examTitle">Visualizador de algoritmos</h1>
           <p class="subtitle" id="examSubtitle">Carregando algoritmo…</p>
@@ -28,76 +29,83 @@
           >
           <span id="themeLabel">Modo escuro</span>
         </button>
-      </div>
+      </header>
 
-      <div class="panel">
-        <h2>Configurar algoritmo</h2>
-        <div class="config" id="configFields">
-          <!-- preenchido por app.js a partir de ENGINE.input.schema -->
+      <main>
+        <div class="panel">
+          <h2>Configurar algoritmo</h2>
+          <div class="config" id="configFields">
+            <!-- preenchido por app.js a partir de ENGINE.input.schema -->
+          </div>
+          <div class="config mt-sm">
+            <button class="ctrl" id="btnRegenerate">Gerar visualização</button>
+            <span class="err" id="listErr"></span>
+          </div>
         </div>
-        <div class="config mt-sm">
-          <button class="ctrl" id="btnRegenerate">Gerar visualização</button>
-          <span class="err" id="listErr"></span>
-        </div>
-      </div>
 
-      <section class="trace-viewer" id="traceViewer">
-        <div class="panel trace-toolbar">
-          <div class="toolbar-row">
-            <span class="phase-pill" id="phase" aria-live="polite"></span>
-            <div class="step-group">
-              <button
-                class="ctrl step-back"
-                id="btnPrev"
-                title="Passo anterior"
-                aria-label="Passo anterior"
-              >
-                <span class="material-symbols-outlined">chevron_left</span>
-              </button>
-              <button
-                class="ctrl step-forward"
-                id="btnNext"
-                title="Avançar"
-                aria-label="Avançar"
-              >
-                <span class="material-symbols-outlined">chevron_right</span>
-                <span class="step-forward-label">Avançar</span>
-              </button>
+        <section class="trace-viewer" id="traceViewer">
+          <div class="panel trace-toolbar">
+            <div class="toolbar-row">
+              <span class="phase-pill" id="phase" aria-live="polite"></span>
+              <div class="step-group">
+                <button
+                  class="ctrl step-back"
+                  id="btnPrev"
+                  title="Passo anterior"
+                  aria-label="Passo anterior"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button
+                  class="ctrl step-forward"
+                  id="btnNext"
+                  title="Avançar"
+                  aria-label="Avançar"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                  <span class="step-forward-label">Avançar</span>
+                </button>
+              </div>
+              <span class="count" id="count"></span>
             </div>
-            <span class="count" id="count"></span>
+            <div
+              class="narrative"
+              id="msg"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <span class="event-icon" id="msgIcon" aria-hidden="true"></span>
+              <span id="msgText"></span>
+            </div>
           </div>
-          <div class="narrative" id="msg" aria-live="polite" aria-atomic="true">
-            <span class="event-icon" id="msgIcon" aria-hidden="true"></span>
-            <span id="msgText"></span>
-          </div>
-        </div>
 
-        <div class="grid">
+          <div class="grid">
+            <div class="panel">
+              <h2>Código (linha atual em destaque)</h2>
+              <div class="code" id="codeBox"></div>
+            </div>
+            <div class="panel">
+              <h2>Pilha de chamadas / frames de memória</h2>
+              <div class="stack-frames" id="stackBox"></div>
+            </div>
+          </div>
+
           <div class="panel">
-            <h2>Código (linha atual em destaque)</h2>
-            <div class="code" id="codeBox"></div>
+            <h2>Lista da chamada atual</h2>
+            <div class="row" id="list"></div>
+            <div class="legend" id="legend"></div>
           </div>
+
           <div class="panel">
-            <h2>Pilha de chamadas / frames de memória</h2>
-            <div class="stack-frames" id="stackBox"></div>
+            <h2>Expressão recursiva (construção e redução)</h2>
+            <div class="expr-box" id="exprBox"></div>
           </div>
-        </div>
+        </section>
 
-        <div class="panel">
-          <h2>Lista da chamada atual</h2>
-          <div class="row" id="list"></div>
-          <div class="legend" id="legend"></div>
-        </div>
-
-        <div class="panel">
-          <h2>Expressão recursiva (construção e redução)</h2>
-          <div class="expr-box" id="exprBox"></div>
-        </div>
-      </section>
-
-      <p class="subtitle mt-lg">
-        <a href="../index.html">← Voltar ao catálogo</a>
-      </p>
+        <p class="subtitle mt-lg">
+          <a href="../index.html">← Voltar ao catálogo</a>
+        </p>
+      </main>
     </div>
 
     <script src="../manifest.js"></script>

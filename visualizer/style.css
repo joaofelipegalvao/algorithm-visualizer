@@ -8,52 +8,9 @@
    ativa marcada como um breakpoint de verdade.
    ============================================================ */
 
-:root[data-theme="light"] {
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --panel-alt: #eef0f3;
-  --text: #1a1d22;
-  --muted: #5b6472;
-  --border: #dde1e7;
-  --color-action: #0f8f7d;
-  --state-active: #0f8f7d;
-  --state-active-soft: #dcf3ef;
-  --state-neutral: #5b6472;
-  --first: #c97a1f;
-  --first-soft: #fbe8d2;
-  --rest: #d7dde3;
-  --code-bg: #1c2129;
-  --code-text: #d6deeb;
-  --code-highlight: #26343a;
-  --code-highlight-edge: #0f8f7d;
-  --state-resolved: #1f8a4c;
-  --state-resolved-soft: #dcefe0;
-  --state-pending: #9a4a06;
-  --shadow: 0 1px 2px rgba(20, 20, 30, 0.06), 0 8px 20px rgba(20, 20, 30, 0.05);
-}
-:root[data-theme="dark"] {
-  --bg: #0e1013;
-  --panel: #171a1f;
-  --panel-alt: #1d2127;
-  --text: #e6e9ee;
-  --muted: #8b93a1;
-  --border: #2a2f37;
-  --color-action: #5ee6d1;
-  --state-active: #5ee6d1;
-  --state-active-soft: rgba(94, 230, 209, 0.12);
-  --state-neutral: #8b93a1;
-  --first: #ffb454;
-  --first-soft: rgba(255, 180, 84, 0.14);
-  --rest: #333a44;
-  --code-bg: #0a0c10;
-  --code-text: #cdd6e4;
-  --code-highlight: rgba(94, 230, 209, 0.12);
-  --code-highlight-edge: #5ee6d1;
-  --state-resolved: #6fdc8c;
-  --state-resolved-soft: rgba(111, 220, 140, 0.14);
-  --state-pending: #f2a65a;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3);
-}
+/* Tokens de cor e tipografia (--bg, --panel, --font-mono etc.) agora
+   vêm de ../theme.css, compartilhado com o catálogo. Ver esse arquivo
+   para a definição de cada variável nos temas claro/escuro. */
 
 * {
   box-sizing: border-box;
@@ -88,7 +45,7 @@
 }
 
 body {
-  font-family: "IBM Plex Sans", Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   margin: 0;
   padding: 20px 16px 40px;
   background: var(--bg);
@@ -106,7 +63,7 @@ body {
 
 h1 {
   margin: 0 0 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   font-size: 20px;
   letter-spacing: -0.01em;
@@ -143,7 +100,7 @@ h1 {
   border-radius: 20px;
   padding: 6px 14px;
   cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
   box-shadow: var(--shadow);
 }
@@ -162,7 +119,7 @@ h1 {
 }
 .panel h2 {
   margin: 0 0 12px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -216,7 +173,7 @@ h1 {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   font-size: 11.5px;
   letter-spacing: 0.04em;
@@ -257,7 +214,7 @@ h1 {
   font-weight: 600;
 }
 .narrative code {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   background: var(--state-active-soft);
   padding: 1px 5px;
   border-radius: 4px;
@@ -279,7 +236,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   font-size: 15px;
   color: #14171c;
@@ -326,7 +283,7 @@ h1 {
   margin-top: 10px;
   font-size: 12.5px;
   color: var(--muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .legend span.swatch {
   display: inline-block;
@@ -344,7 +301,7 @@ h1 {
   border-radius: 8px;
   overflow-x: auto;
   overflow-y: auto;
-  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 13.5px;
 }
 .codeline {
@@ -449,7 +406,7 @@ h1 {
 .frame-title {
   display: flex;
   justify-content: space-between;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   margin-bottom: 5px;
 }
@@ -462,7 +419,7 @@ h1 {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 2px 8px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
 }
 .frame-vars .k {
@@ -482,7 +439,7 @@ h1 {
 
 /* Expressão recursiva */
 .expr-box {
-  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   background: var(--panel-alt);
   border: 1px solid var(--border);
@@ -560,7 +517,7 @@ button.ctrl {
   border-radius: 6px;
   padding: 8px 16px;
   cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
 }
@@ -628,7 +585,7 @@ button.step-forward {
    compartilhado do TraceViewer (.trace-toolbar .toolbar-row), ao lado
    do step-group — não mais dentro do painel de Código. */
 .count {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
   color: var(--muted);
   white-space: nowrap;
@@ -659,13 +616,13 @@ button.step-forward {
   border-radius: 6px;
   background: var(--panel-alt);
   color: var(--text);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   width: 220px;
 }
 .config .err {
   color: #c62828;
   font-size: 12px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .config .field {
   display: flex;
@@ -677,7 +634,7 @@ button.step-forward {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 .config .field input[type="text"] {
   width: 180px;

@@ -4,12 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Algorithm Visualizer — Catálogo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="catalog.css" />
+    <script>
+      // Mesmo padrão do visualizer/app.js: tema inicial fixo em "light",
+      // aplicado antes da renderização pra evitar flash de tema errado.
+      document.documentElement.setAttribute("data-theme", "light");
+    </script>
   </head>
   <body>
-    <header>
-      <h1>Algorithm Visualizer</h1>
-      <p>Catálogo de algoritmos disponíveis.</p>
+    <header class="page-header">
+      <div>
+        <h1>Algorithm Visualizer</h1>
+        <p>Catálogo de algoritmos disponíveis.</p>
+      </div>
+      <button class="theme-btn" id="themeBtn">
+        <span id="themeLabel">Modo escuro</span>
+      </button>
     </header>
 
     <main id="catalog">
@@ -18,5 +35,19 @@
 
     <script src="manifest.js"></script>
     <script src="catalog.js"></script>
+    <script>
+      // Toggle de tema equivalente ao do visualizer (visualizer/app.js
+      // toggleTheme), duplicado aqui em vez de importado porque o
+      // catálogo não carrega app.js como módulo — mantém as duas telas
+      // com o mesmo comportamento sem acoplar os dois entry points.
+      document.getElementById("themeBtn")?.addEventListener("click", () => {
+        const root = document.documentElement;
+        const next =
+          root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        document.getElementById("themeLabel").textContent =
+          next === "dark" ? "Modo claro" : "Modo escuro";
+      });
+    </script>
   </body>
 </html>
