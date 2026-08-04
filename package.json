@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "check": "tsc -p tsconfig.json"
+    "check": "tsc -p tsconfig.json && node scripts/check-code-sync.mjs"
   },
   "devDependencies": {
     "typescript": "6.0.3"
