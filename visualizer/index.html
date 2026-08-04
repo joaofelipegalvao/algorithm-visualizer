@@ -113,9 +113,19 @@
           '<p class="notice">Nenhum algoritmo encontrado em manifest.js.</p>',
         );
       } else {
-        const engineMod = await import(`../${item.engine}`);
-        const { initApp } = await import("./app.js");
-        initApp(engineMod.ENGINE);
+        try {
+          const engineMod = await import(`../${item.engine}`);
+          const { initApp } = await import("./app.js");
+          initApp(engineMod.ENGINE);
+        } catch (err) {
+          document.body.insertAdjacentHTML(
+            "beforeend",
+            '<p class="notice" role="alert"></p>',
+          );
+          document.body.lastElementChild.textContent =
+            "Falha ao carregar o algoritmo: " +
+            (err instanceof Error ? err.message : String(err));
+        }
       }
     </script>
   </body>

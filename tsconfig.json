@@ -13,6 +13,7 @@
     "algorithms/**/*.js",
     "visualizer/**/*.js",
     "manifest.js",
+    "catalog.js",
     "types/**/*.d.ts"
   ]
 }

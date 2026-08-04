@@ -1,6 +1,11 @@
 (function () {
   var catalogEl = document.getElementById("catalog");
 
+  if (!catalogEl) {
+    console.error("catalog.js: elemento #catalog não encontrado no DOM.");
+    return;
+  }
+
   if (
     typeof ALGORITHM_MANIFEST === "undefined" ||
     !Array.isArray(ALGORITHM_MANIFEST)
