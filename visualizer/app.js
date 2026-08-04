@@ -92,10 +92,10 @@ function parseField(field, raw) {
   }
 }
 
-function collectInputs() {
+function collectInputs(engine) {
   const inputs = {};
   const errors = [];
-  ENGINE.input.schema.forEach((field) => {
+  engine.input.schema.forEach((field) => {
     const el = /** @type {HTMLInputElement | null} */ (
       document.getElementById(fieldInputId(field.key))
     );
@@ -171,200 +171,213 @@ function toDisplayStep(trace, step) {
   };
 }
 
-/* ---------- TraceViewer ---------- */
-const TraceViewer = {
-  /** @type {TraceResult | null} */
-  trace: null,
-  step: 0,
-
-  regenerate() {
-    const errEl = /** @type {HTMLElement} */ (
-      document.getElementById("listErr")
-    );
-    const { inputs, errors } = collectInputs();
-
-    if (errors.length) {
-      errEl.textContent = errors[0];
-      return;
-    }
-    errEl.textContent = "";
-
-    this.trace = ENGINE.buildTrace(inputs);
-    this.step = 0;
-    this.render();
-  },
-
-  next() {
-    if (this.trace && this.step < this.trace.steps.length - 1) {
-      this.step++;
-      this.render();
-    }
-  },
-  prev() {
-    if (this.step > 0) {
-      this.step--;
-      this.render();
-    }
-  },
-
-  render() {
-    if (!this.trace || this.trace.steps.length === 0) return;
-    const s = toDisplayStep(this.trace, this.step);
-
-    this.renderStatus(s);
-    this.renderListPanel(s);
-    this.renderCodePanel(s);
-    this.renderCallStackPanel(s);
-    this.renderExpressionPanel();
-    this.renderTransport();
-  },
-
-  renderStatus(s) {
-    const phaseEl = /** @type {HTMLElement} */ (document.getElementById("phase"));
-    const iconEl = /** @type {HTMLElement} */ (document.getElementById("msgIcon"));
-    if (s.isFinal) {
-      phaseEl.textContent = "concluído";
-      phaseEl.classList.add("phase-pill-done");
-      iconEl.classList.add("event-icon-done");
-      clearEl(iconEl);
-      iconEl.appendChild(materialIcon("task_alt"));
-      renderNodesInto(
-        /** @type {HTMLElement} */ (document.getElementById("msgText")),
-        ["Execução concluída — nenhum passo restante."],
-      );
-      return;
-    }
-    phaseEl.classList.remove("phase-pill-done");
-    iconEl.classList.remove("event-icon-done");
-    phaseEl.textContent = s.phase;
-    const eventIcon = ENGINE.events && ENGINE.events[s.event]?.icon;
-    clearEl(iconEl);
-    if (eventIcon) iconEl.appendChild(materialIcon(eventIcon));
-    const narrative = ENGINE.messages[s.event](s.payload);
-    renderNodesInto(
-      /** @type {HTMLElement} */ (document.getElementById("msgText")),
-      narrative,
-    );
-  },
-
-  renderListPanel(s) {
-    const listEl = /** @type {HTMLElement} */ (document.getElementById("list"));
-    clearEl(listEl);
-    const row = document.createElement("div");
-    row.className = "row current-frame-list";
-    s.elements.forEach((item) => {
-      const box = document.createElement("div");
-      const statusClass = item.status === "resolved" ? " resolved" : "";
-      const roleClass = ROLE_CLASS[item.role] || "rest";
-      box.className = "box " + roleClass + statusClass;
-      box.textContent = item.text;
-      row.appendChild(box);
-    });
-    listEl.appendChild(row);
-  },
-
-  renderCodePanel(s) {
-    const codeBox = /** @type {HTMLElement} */ (
-      document.getElementById("codeBox")
-    );
-    clearEl(codeBox);
-    ENGINE.code.lines.forEach((line, idx) => {
-      const ln = idx + 1;
-      const div = document.createElement("div");
-      div.className = "codeline" + (ln === s.line ? " active" : "");
-
-      const lnSpan = document.createElement("span");
-      lnSpan.className = "ln";
-      lnSpan.textContent = String(ln);
-      div.appendChild(lnSpan);
-
-      const codeSpan = document.createElement("span");
-      codeSpan.innerHTML = ENGINE.code.highlight(line);
-      div.appendChild(codeSpan);
-
-      codeBox.appendChild(div);
-    });
-  },
-
-  renderCallStackPanel(s) {
-    const stackBox = /** @type {HTMLElement} */ (
+/* ---------- TraceViewer ----------
+ * Antes era um objeto literal no nível de módulo (TraceViewer.trace /
+ * TraceViewer.step mutáveis direto), com no máximo uma instância
+ * possível por carregamento de página, impossível de testar sem um
+ * DOM ao vivo, e sem nada impedindo outro script de fazer
+ * `TraceViewer.step = 999` e chamar render() num estado fora dos
+ * limites (só next()/prev() checavam limites, render() em si não).
+ * createTraceViewer(engine) devolve uma instância nova a cada
+ * chamada, fechando sobre `engine` em vez de ler o ENGINE global do
+ * módulo — cada instância é isolada e testável isoladamente.
+ *
+ * Os elementos do DOM usados no hot path de render() (Avançar/Voltar
+ * dispara um render por clique) são resolvidos uma única vez aqui,
+ * na criação da instância, em vez de um getElementById novo dentro de
+ * cada renderX() a cada passo de navegação.
+ */
+function createTraceViewer(engine) {
+  const els = {
+    phase: /** @type {HTMLElement} */ (document.getElementById("phase")),
+    msgIcon: /** @type {HTMLElement} */ (document.getElementById("msgIcon")),
+    msgText: /** @type {HTMLElement} */ (document.getElementById("msgText")),
+    list: /** @type {HTMLElement} */ (document.getElementById("list")),
+    codeBox: /** @type {HTMLElement} */ (document.getElementById("codeBox")),
+    stackBox: /** @type {HTMLElement} */ (
       document.getElementById("stackBox")
-    );
-    clearEl(stackBox);
-    s.stack.forEach((frame, idx) => {
-      const isCurrent = idx === s.stack.length - 1;
-
-      const card = document.createElement("div");
-      card.className = "frame-card" + (isCurrent ? " current" : "");
-
-      const titleDiv = document.createElement("div");
-      titleDiv.className = "frame-title";
-      const titleSpan = document.createElement("span");
-      titleSpan.textContent = frame.title;
-      const depthSpan = document.createElement("span");
-      depthSpan.className = "depth-tag";
-      depthSpan.textContent = isCurrent
-        ? `profundidade ${frame.depth} · atual`
-        : `profundidade ${frame.depth}`;
-      titleDiv.appendChild(titleSpan);
-      titleDiv.appendChild(depthSpan);
-      card.appendChild(titleDiv);
-
-      const varsDiv = document.createElement("div");
-      varsDiv.className = "frame-vars";
-      frame.vars.forEach((v) => {
-        const kSpan = document.createElement("span");
-        kSpan.className = "k";
-        kSpan.textContent = v.k;
-
-        const vSpan = document.createElement("span");
-        vSpan.className =
-          "v" +
-          (v.status === "pending"
-            ? " pending"
-            : v.status === "resolved"
-              ? " resolved"
-              : "");
-        vSpan.textContent = v.status === "pending" ? "aguardando…" : v.v;
-
-        varsDiv.appendChild(kSpan);
-        varsDiv.appendChild(vSpan);
-      });
-      card.appendChild(varsDiv);
-      stackBox.appendChild(card);
-    });
-
-    // .stack-frames usa column-reverse pra desenhar o frame atual no topo
-    // da pilha física. Com overflow-y: auto, scrollTop: 0 é o padrão do
-    // browser e mostra os frames mais ANTIGOS — o frame atual fica
-    // escondido acima, fora da área visível. Forçar um scrollTop bem
-    // negativo (o browser faz o clamp pro mínimo válido sozinho) ancora
-    // a visão no topo real do conteúdo, ou seja, no frame atual.
-    stackBox.scrollTop = -stackBox.scrollHeight;
-  },
-
-  renderExpressionPanel() {
-    const trace = /** @type {TraceResult} */ (this.trace);
-    const expr = ENGINE.buildExpression(trace, this.step);
-    renderNodesInto(
-      /** @type {HTMLElement} */ (document.getElementById("exprBox")),
-      expr.nodes,
-    );
-  },
-
-  renderTransport() {
-    const trace = /** @type {TraceResult} */ (this.trace);
-    /** @type {HTMLElement} */ (document.getElementById("count")).textContent =
-      "Estado " + (this.step + 1) + " de " + trace.steps.length;
-
-    /** @type {HTMLButtonElement} */ (
+    ),
+    exprBox: /** @type {HTMLElement} */ (document.getElementById("exprBox")),
+    count: /** @type {HTMLElement} */ (document.getElementById("count")),
+    btnPrev: /** @type {HTMLButtonElement} */ (
       document.getElementById("btnPrev")
-    ).disabled = this.step === 0;
-    /** @type {HTMLButtonElement} */ (
+    ),
+    btnNext: /** @type {HTMLButtonElement} */ (
       document.getElementById("btnNext")
-    ).disabled = this.step === trace.steps.length - 1;
-  },
-};
+    ),
+    listErr: /** @type {HTMLElement} */ (document.getElementById("listErr")),
+  };
+
+  return {
+    /** @type {TraceResult | null} */
+    trace: null,
+    step: 0,
+
+    regenerate() {
+      const { inputs, errors } = collectInputs(engine);
+
+      if (errors.length) {
+        els.listErr.textContent = errors[0];
+        return;
+      }
+      els.listErr.textContent = "";
+
+      this.trace = engine.buildTrace(inputs);
+      this.step = 0;
+      this.render();
+    },
+
+    next() {
+      if (this.trace && this.step < this.trace.steps.length - 1) {
+        this.step++;
+        this.render();
+      }
+    },
+    prev() {
+      if (this.step > 0) {
+        this.step--;
+        this.render();
+      }
+    },
+
+    render() {
+      if (!this.trace || this.trace.steps.length === 0) return;
+      const s = toDisplayStep(this.trace, this.step);
+
+      this.renderStatus(s);
+      this.renderListPanel(s);
+      this.renderCodePanel(s);
+      this.renderCallStackPanel(s);
+      this.renderExpressionPanel();
+      this.renderTransport();
+    },
+
+    renderStatus(s) {
+      if (s.isFinal) {
+        els.phase.textContent = "concluído";
+        els.phase.classList.add("phase-pill-done");
+        els.msgIcon.classList.add("event-icon-done");
+        clearEl(els.msgIcon);
+        els.msgIcon.appendChild(materialIcon("task_alt"));
+        renderNodesInto(els.msgText, [
+          "Execução concluída — nenhum passo restante.",
+        ]);
+        return;
+      }
+      els.phase.classList.remove("phase-pill-done");
+      els.msgIcon.classList.remove("event-icon-done");
+      els.phase.textContent = s.phase;
+      const eventIcon = engine.events && engine.events[s.event]?.icon;
+      clearEl(els.msgIcon);
+      if (eventIcon) els.msgIcon.appendChild(materialIcon(eventIcon));
+      const narrative = engine.messages[s.event](s.payload);
+      renderNodesInto(els.msgText, narrative);
+    },
+
+    renderListPanel(s) {
+      clearEl(els.list);
+      const row = document.createElement("div");
+      row.className = "row current-frame-list";
+      s.elements.forEach((item) => {
+        const box = document.createElement("div");
+        const statusClass = item.status === "resolved" ? " resolved" : "";
+        const roleClass = ROLE_CLASS[item.role] || "rest";
+        box.className = "box " + roleClass + statusClass;
+        box.textContent = item.text;
+        row.appendChild(box);
+      });
+      els.list.appendChild(row);
+    },
+
+    renderCodePanel(s) {
+      clearEl(els.codeBox);
+      engine.code.lines.forEach((line, idx) => {
+        const ln = idx + 1;
+        const div = document.createElement("div");
+        div.className = "codeline" + (ln === s.line ? " active" : "");
+
+        const lnSpan = document.createElement("span");
+        lnSpan.className = "ln";
+        lnSpan.textContent = String(ln);
+        div.appendChild(lnSpan);
+
+        const codeSpan = document.createElement("span");
+        codeSpan.innerHTML = engine.code.highlight(line);
+        div.appendChild(codeSpan);
+
+        els.codeBox.appendChild(div);
+      });
+    },
+
+    renderCallStackPanel(s) {
+      clearEl(els.stackBox);
+      s.stack.forEach((frame, idx) => {
+        const isCurrent = idx === s.stack.length - 1;
+
+        const card = document.createElement("div");
+        card.className = "frame-card" + (isCurrent ? " current" : "");
+
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "frame-title";
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = frame.title;
+        const depthSpan = document.createElement("span");
+        depthSpan.className = "depth-tag";
+        depthSpan.textContent = isCurrent
+          ? `profundidade ${frame.depth} · atual`
+          : `profundidade ${frame.depth}`;
+        titleDiv.appendChild(titleSpan);
+        titleDiv.appendChild(depthSpan);
+        card.appendChild(titleDiv);
+
+        const varsDiv = document.createElement("div");
+        varsDiv.className = "frame-vars";
+        frame.vars.forEach((v) => {
+          const kSpan = document.createElement("span");
+          kSpan.className = "k";
+          kSpan.textContent = v.k;
+
+          const vSpan = document.createElement("span");
+          vSpan.className =
+            "v" +
+            (v.status === "pending"
+              ? " pending"
+              : v.status === "resolved"
+                ? " resolved"
+                : "");
+          vSpan.textContent = v.status === "pending" ? "aguardando…" : v.v;
+
+          varsDiv.appendChild(kSpan);
+          varsDiv.appendChild(vSpan);
+        });
+        card.appendChild(varsDiv);
+        els.stackBox.appendChild(card);
+      });
+
+      // .stack-frames usa column-reverse pra desenhar o frame atual no topo
+      // da pilha física. Com overflow-y: auto, scrollTop: 0 é o padrão do
+      // browser e mostra os frames mais ANTIGOS — o frame atual fica
+      // escondido acima, fora da área visível. Forçar um scrollTop bem
+      // negativo (o browser faz o clamp pro mínimo válido sozinho) ancora
+      // a visão no topo real do conteúdo, ou seja, no frame atual.
+      els.stackBox.scrollTop = -els.stackBox.scrollHeight;
+    },
+
+    renderExpressionPanel() {
+      const trace = /** @type {TraceResult} */ (this.trace);
+      const expr = engine.buildExpression(trace, this.step);
+      renderNodesInto(els.exprBox, expr.nodes);
+    },
+
+    renderTransport() {
+      const trace = /** @type {TraceResult} */ (this.trace);
+      els.count.textContent =
+        "Estado " + (this.step + 1) + " de " + trace.steps.length;
+      els.btnPrev.disabled = this.step === 0;
+      els.btnNext.disabled = this.step === trace.steps.length - 1;
+    },
+  };
+}
 
 /* ---------- Meta e legenda ---------- */
 function initMeta() {
@@ -477,17 +490,17 @@ function validateEngine() {
 }
 
 /* ---------- Wiring de eventos (substitui os onclick/oninput inline) ---------- */
-function wireEvents() {
+function wireEvents(viewer) {
   document.getElementById("themeBtn")?.addEventListener("click", toggleTheme);
   document
     .getElementById("btnRegenerate")
-    ?.addEventListener("click", () => TraceViewer.regenerate());
+    ?.addEventListener("click", () => viewer.regenerate());
   document
     .getElementById("btnPrev")
-    ?.addEventListener("click", () => TraceViewer.prev());
+    ?.addEventListener("click", () => viewer.prev());
   document
     .getElementById("btnNext")
-    ?.addEventListener("click", () => TraceViewer.next());
+    ?.addEventListener("click", () => viewer.next());
 }
 
 export function initApp(engine) {
@@ -496,6 +509,7 @@ export function initApp(engine) {
   initMeta();
   buildConfigForm();
   renderLegend();
-  wireEvents();
-  TraceViewer.regenerate();
+  const viewer = createTraceViewer(engine);
+  wireEvents(viewer);
+  viewer.regenerate();
 }
