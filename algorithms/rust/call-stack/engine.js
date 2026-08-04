@@ -1,6 +1,6 @@
 import { strong, code, highlightCode } from "../../_shared/engine-kit.js";
 
-const ENGINE_VERSION = 3;
+const ENGINE_VERSION = 4;
 
 const CODE_LINES = [
   "fn saudacao(nome: &str) {",
@@ -70,9 +70,11 @@ function buildTrace(inputs) {
   const nome = inputs.nome;
   const steps = [];
   const callStack = [];
+  let idCounter = 0;
 
   function snapshotStack() {
     return callStack.map((f) => ({
+      id: String(f.id),
       title: f.title,
       depth: f.depth,
       vars: f.vars,
@@ -86,7 +88,7 @@ function buildTrace(inputs) {
   }
 
   function pushFrame(title, depth, vars) {
-    callStack.push({ title, depth, vars });
+    callStack.push({ id: idCounter++, title, depth, vars });
   }
   function popFrame() {
     callStack.pop();

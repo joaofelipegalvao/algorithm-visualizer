@@ -417,6 +417,26 @@ h1 {
     transform: translateY(0);
   }
 }
+/* Saída de frame (pop): aplicada via JS logo antes de remover o nó do
+   DOM, quando um frame sai da pilha (a chamada retornou). Especificidade
+   (0,0,2,0) maior que .frame-card (0,0,1,0) pra sobrescrever a
+   animation de entrada. app.js escuta 'animationend' pra remover o
+   elemento só depois da animação terminar, com um timeout de segurança
+   como rede (ver renderCallStackPanel). */
+.frame-card.frame-exit {
+  animation: frameSlideOut 0.22s ease forwards;
+  pointer-events: none;
+}
+@keyframes frameSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
 .frame-card:not(.current) {
   opacity: 0.62;
   transform: scale(0.98);
@@ -667,6 +687,7 @@ button.step-forward {
 @media (prefers-reduced-motion: reduce) {
   .current-frame-list .box,
   .frame-card,
+  .frame-card.frame-exit,
   .theme-btn {
     animation: none !important;
     transition: none !important;

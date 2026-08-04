@@ -67,6 +67,7 @@ interface StackVar {
 }
 
 interface StackFrame {
+  id: string;
   title: string;
   depth: number;
   vars: StackVar[];

@@ -1,6 +1,6 @@
 import { strong, code, highlightCode } from "../../_shared/engine-kit.js";
 
-const ENGINE_VERSION = 3;
+const ENGINE_VERSION = 4;
 
 /* ---------- Código-fonte exibido no painel (estático) ---------- */
 const CODE_LINES = [
@@ -165,6 +165,7 @@ function buildTrace(inputs) {
   /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
+      id: String(f.id),
       title: `busca_binaria_com_offset([${f.list.join(", ")}], ${alvo}, ${f.offset})`,
       depth: f.depth,
       vars: [

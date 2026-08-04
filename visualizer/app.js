@@ -171,6 +171,89 @@ function toDisplayStep(trace, step) {
   };
 }
 
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+function buildFrameVarsContent(varsDiv, vars) {
+  clearEl(varsDiv);
+  vars.forEach((v) => {
+    const kSpan = document.createElement("span");
+    kSpan.className = "k";
+    kSpan.textContent = v.k;
+
+    const vSpan = document.createElement("span");
+    vSpan.className =
+      "v" +
+      (v.status === "pending"
+        ? " pending"
+        : v.status === "resolved"
+          ? " resolved"
+          : "");
+    vSpan.textContent = v.status === "pending" ? "aguardando…" : v.v;
+
+    varsDiv.appendChild(kSpan);
+    varsDiv.appendChild(vSpan);
+  });
+}
+
+function updateFrameVars(card, vars) {
+  const varsDiv = /** @type {HTMLElement | null} */ (
+    card.querySelector(".frame-vars")
+  );
+  if (varsDiv) buildFrameVarsContent(varsDiv, vars);
+}
+
+/** @param {StackFrame} frame */
+function buildFrameCard(frame) {
+  const card = document.createElement("div");
+  card.className = "frame-card";
+
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "frame-title";
+  const titleSpan = document.createElement("span");
+  titleSpan.textContent = frame.title;
+  const depthSpan = document.createElement("span");
+  depthSpan.className = "depth-tag";
+  depthSpan.dataset.depth = String(frame.depth);
+  depthSpan.textContent = `profundidade ${frame.depth}`;
+  titleDiv.appendChild(titleSpan);
+  titleDiv.appendChild(depthSpan);
+  card.appendChild(titleDiv);
+
+  const varsDiv = document.createElement("div");
+  varsDiv.className = "frame-vars";
+  buildFrameVarsContent(varsDiv, frame.vars);
+  card.appendChild(varsDiv);
+
+  return card;
+}
+
+// Anima a saída de um frame que saiu da pilha (pop) e só remove o nó do
+// DOM depois — 'animationend' no caminho normal, um timeout de segurança
+// como rede caso ele nunca dispare (aba em background pode atrasar rAF
+// indefinidamente, por exemplo). Com motion reduzido, pula a animação e
+// remove na hora — não faz sentido esperar um efeito que o CSS já anula.
+function removeFrameAnimated(el) {
+  if (prefersReducedMotion()) {
+    el.remove();
+    return;
+  }
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    el.remove();
+  };
+  el.addEventListener("animationend", finish, { once: true });
+  setTimeout(finish, 260);
+  el.classList.add("frame-exit");
+}
+
 /* ---------- TraceViewer ----------
  * Antes era um objeto literal no nível de módulo (TraceViewer.trace /
  * TraceViewer.step mutáveis direto), com no máximo uma instância
@@ -208,6 +291,36 @@ function createTraceViewer(engine) {
     listErr: /** @type {HTMLElement} */ (document.getElementById("listErr")),
   };
 
+  // Cache de nós reaproveitados entre renders (ver renderCodePanel e
+  // renderCallStackPanel): evita destruir e recriar DOM que não mudou de
+  // fato entre um passo e outro.
+  /** @type {HTMLElement[] | null} */
+  let codeLineEls = null;
+  /** @type {Map<string, HTMLElement>} */
+  let stackEls = new Map();
+  /** @type {string[]} */
+  let stackOrder = [];
+
+  function buildCodeLines() {
+    clearEl(els.codeBox);
+    return engine.code.lines.map((line, idx) => {
+      const div = document.createElement("div");
+      div.className = "codeline";
+
+      const lnSpan = document.createElement("span");
+      lnSpan.className = "ln";
+      lnSpan.textContent = String(idx + 1);
+      div.appendChild(lnSpan);
+
+      const codeSpan = document.createElement("span");
+      codeSpan.innerHTML = engine.code.highlight(line);
+      div.appendChild(codeSpan);
+
+      els.codeBox.appendChild(div);
+      return div;
+    });
+  }
+
   return {
     /** @type {TraceResult | null} */
     trace: null,
@@ -224,6 +337,14 @@ function createTraceViewer(engine) {
 
       this.trace = engine.buildTrace(inputs);
       this.step = 0;
+      // Uma nova trace começa uma contagem de ids nova a partir de 0 no
+      // engine (idCounter reinicia a cada buildTrace) — qualquer id
+      // cacheado da trace anterior não tem relação nenhuma com o novo,
+      // mesmo que colidam numericamente. É uma re-execução do zero, não
+      // um passo de navegação, então limpa sem animação de saída.
+      stackEls.clear();
+      stackOrder = [];
+      clearEl(els.stackBox);
       this.render();
     },
 
@@ -290,69 +411,78 @@ function createTraceViewer(engine) {
     },
 
     renderCodePanel(s) {
-      clearEl(els.codeBox);
-      engine.code.lines.forEach((line, idx) => {
-        const ln = idx + 1;
-        const div = document.createElement("div");
-        div.className = "codeline" + (ln === s.line ? " active" : "");
-
-        const lnSpan = document.createElement("span");
-        lnSpan.className = "ln";
-        lnSpan.textContent = String(ln);
-        div.appendChild(lnSpan);
-
-        const codeSpan = document.createElement("span");
-        codeSpan.innerHTML = engine.code.highlight(line);
-        div.appendChild(codeSpan);
-
-        els.codeBox.appendChild(div);
+      // engine.code.lines nunca muda depois do primeiro render — só a
+      // linha ativa troca a cada passo. Antes recriava todo o painel de
+      // código (uma <div> por linha) em toda navegação; agora as <div>
+      // ficam cacheadas (buildCodeLines, abaixo) e só a classe "active"
+      // se move de uma pra outra.
+      const lines = codeLineEls ?? (codeLineEls = buildCodeLines());
+      lines.forEach((div, idx) => {
+        div.classList.toggle("active", idx + 1 === s.line);
       });
     },
 
     renderCallStackPanel(s) {
-      clearEl(els.stackBox);
-      s.stack.forEach((frame, idx) => {
-        const isCurrent = idx === s.stack.length - 1;
+      const newIds = s.stack.map((f) => f.id);
 
-        const card = document.createElement("div");
-        card.className = "frame-card" + (isCurrent ? " current" : "");
+      // .stack é sempre um caminho raiz→atual de uma pilha de chamadas de
+      // verdade (nunca uma árvore arbitrária — ver docs/ENGINE.md), então
+      // dois passos quaisquer só podem diferir por um sufixo: frames que
+      // saíram (pop) e/ou frames que entraram (push). Frames num prefixo
+      // comum continuam sendo a mesma chamada, só com vars atualizadas.
+      let common = 0;
+      while (
+        common < stackOrder.length &&
+        common < newIds.length &&
+        stackOrder[common] === newIds[common]
+      ) {
+        common++;
+      }
 
-        const titleDiv = document.createElement("div");
-        titleDiv.className = "frame-title";
-        const titleSpan = document.createElement("span");
-        titleSpan.textContent = frame.title;
-        const depthSpan = document.createElement("span");
-        depthSpan.className = "depth-tag";
-        depthSpan.textContent = isCurrent
-          ? `profundidade ${frame.depth} · atual`
-          : `profundidade ${frame.depth}`;
-        titleDiv.appendChild(titleSpan);
-        titleDiv.appendChild(depthSpan);
-        card.appendChild(titleDiv);
+      // Frames que saíram da pilha desde o último render: animação de
+      // saída, remoção só depois que ela termina (ou depois de um timeout
+      // de segurança, caso animationend não dispare — motion reduzido,
+      // aba em background, etc).
+      for (let i = stackOrder.length - 1; i >= common; i--) {
+        const id = stackOrder[i];
+        const el = stackEls.get(id);
+        stackEls.delete(id);
+        if (el) removeFrameAnimated(el);
+      }
 
-        const varsDiv = document.createElement("div");
-        varsDiv.className = "frame-vars";
-        frame.vars.forEach((v) => {
-          const kSpan = document.createElement("span");
-          kSpan.className = "k";
-          kSpan.textContent = v.k;
+      // Frames que já existiam (prefixo comum): atualiza só as vars, sem
+      // recriar o card — não deve retrigger a animação de entrada.
+      for (let i = 0; i < common; i++) {
+        const card = stackEls.get(newIds[i]);
+        if (card) updateFrameVars(card, s.stack[i].vars);
+      }
 
-          const vSpan = document.createElement("span");
-          vSpan.className =
-            "v" +
-            (v.status === "pending"
-              ? " pending"
-              : v.status === "resolved"
-                ? " resolved"
-                : "");
-          vSpan.textContent = v.status === "pending" ? "aguardando…" : v.v;
-
-          varsDiv.appendChild(kSpan);
-          varsDiv.appendChild(vSpan);
-        });
-        card.appendChild(varsDiv);
+      // Frames novos: cria e anexa (a animação de entrada de .frame-card
+      // já existente, slideIn, dispara sozinha por serem nós novos no DOM).
+      for (let i = common; i < s.stack.length; i++) {
+        const card = buildFrameCard(s.stack[i]);
+        stackEls.set(newIds[i], card);
         els.stackBox.appendChild(card);
+      }
+
+      // "current" (o último frame da pilha) pode ter mudado mesmo sem
+      // recriar nada — por exemplo, o frame de baixo persiste no prefixo
+      // comum, mas deixou de ser o current porque um novo entrou por cima.
+      stackEls.forEach((card, id) => {
+        const isCurrent = id === newIds[newIds.length - 1];
+        card.classList.toggle("current", isCurrent);
+        const depthSpan = /** @type {HTMLElement} */ (
+          card.querySelector(".depth-tag")
+        );
+        if (depthSpan) {
+          const depth = depthSpan.dataset.depth;
+          depthSpan.textContent = isCurrent
+            ? `profundidade ${depth} · atual`
+            : `profundidade ${depth}`;
+        }
       });
+
+      stackOrder = newIds;
 
       // .stack-frames usa column-reverse pra desenhar o frame atual no topo
       // da pilha física. Com overflow-y: auto, scrollTop: 0 é o padrão do
@@ -421,7 +551,7 @@ function toggleTheme() {
 }
 
 /* ---------- Validação do contrato ENGINE ---------- */
-const SUPPORTED_ENGINE_VERSION = 3;
+const SUPPORTED_ENGINE_VERSION = 4;
 
 function validateEngineStructure() {
   const declaredEvents = new Set(Object.keys(ENGINE.events || {}));

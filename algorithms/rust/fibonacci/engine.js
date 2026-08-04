@@ -1,6 +1,6 @@
 import { strong, code, highlightCode } from "../../_shared/engine-kit.js";
 
-const ENGINE_VERSION = 3;
+const ENGINE_VERSION = 4;
 
 const CODE_LINES = [
   "fn fib(n: u64) -> u64 {",
@@ -98,6 +98,7 @@ function buildTrace(inputs) {
   /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
+      id: String(f.id),
       title: `fib(${f.n})`,
       depth: f.depth,
       vars: [

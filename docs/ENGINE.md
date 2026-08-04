@@ -1,4 +1,4 @@
-# Contrato ENGINE (v3)
+# Contrato ENGINE (v4)
 
 Este documento descreve o contrato real entre `engine.js` (um por
 algoritmo, em `algorithms/<language>/<id>/engine.js`) e o shell
@@ -248,6 +248,21 @@ stack/elements/payload`, `messages`, `buildTrace`, `buildExpression`.
   estrutural além da comportamental. Duplicação mecânica
   (`escapeHtml`/`strong`/`code`/`highlightRust`/`elementsFor`
   cabeça+cauda) extraída para `algorithms/_shared/engine-kit.js`.
+- **v4**: `StackFrame.id: string` — identidade estável do frame entre
+  passos, o mesmo papel que `TraceElement.id` já cumpria pro array.
+  Motivo concreto: animação de push/pop no painel de pilha
+  (`renderCallStackPanel`), que precisa saber se o frame na posição N
+  é "a mesma chamada, só que com vars atualizadas" ou "uma chamada
+  diferente que caiu na mesma profundidade" — sem id, um diff por
+  posição/profundidade eventualmente confunde as duas coisas (comum em
+  recursão: pop seguido de outra chamada na mesma profundidade). Todo
+  engine já calculava esse id internamente (`idCounter++` por frame,
+  usado em `TraceStep.frameId`) — só faltava `snapshotStack()`
+  propagar `f.id` pro objeto público. `call-stack` foi o único sem
+  `idCounter` (não é recursivo, cada função só é chamada uma vez, o
+  próprio `title` já seria um id válido) — ganhou um `idCounter`
+  próprio de qualquer forma, por consistência com os outros 7 engines
+  e pra não deixar o caso não-recursivo como exceção ao contrato.
 
 ## Próximas hipóteses a testar (não implementar preventivamente)
 

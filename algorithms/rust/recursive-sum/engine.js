@@ -4,7 +4,7 @@ import {
   highlightCode,
   elementsForHeadTail,
 } from "../../_shared/engine-kit.js";
-const ENGINE_VERSION = 3;
+const ENGINE_VERSION = 4;
 
 const CODE_LINES = [
   "fn soma(lista: &[i32]) -> i32 {",
@@ -85,6 +85,7 @@ function buildTrace(inputs) {
   /** @returns {StackFrame[]} */
   function snapshotStack() {
     return callStack.map((f) => ({
+      id: String(f.id),
       title: `soma([${f.list.join(", ")}])`,
       depth: f.depth,
       vars: [
