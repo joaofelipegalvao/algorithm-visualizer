@@ -187,8 +187,6 @@ const TraceViewer = {
 
     this.trace = ENGINE.buildTrace(inputs);
     this.step = 0;
-    /** @type {HTMLInputElement} */ (document.getElementById("slider")).max =
-      String(this.trace.steps.length - 1);
     this.render();
   },
 
@@ -203,10 +201,6 @@ const TraceViewer = {
       this.step--;
       this.render();
     }
-  },
-  onSlider(v) {
-    this.step = Number(v);
-    this.render();
   },
 
   render() {
@@ -352,8 +346,6 @@ const TraceViewer = {
 
   renderTransport() {
     const trace = /** @type {TraceResult} */ (this.trace);
-    /** @type {HTMLInputElement} */ (document.getElementById("slider")).value =
-      String(this.step);
     /** @type {HTMLElement} */ (document.getElementById("count")).textContent =
       "Estado " + (this.step + 1) + " de " + trace.steps.length;
 
@@ -488,11 +480,6 @@ function wireEvents() {
   document
     .getElementById("btnNext")
     ?.addEventListener("click", () => TraceViewer.next());
-  document
-    .getElementById("slider")
-    ?.addEventListener("input", (e) =>
-      TraceViewer.onSlider(/** @type {HTMLInputElement} */ (e.target).value),
-    );
 }
 
 export function initApp(engine) {

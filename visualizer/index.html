@@ -16,7 +16,7 @@
     <div class="wrap">
       <div class="topbar">
         <div>
-          <h2 id="examTitle">Visualizador de algoritmos</h2>
+          <h1 id="examTitle">Visualizador de algoritmos</h1>
           <p class="subtitle" id="examSubtitle">Carregando algoritmo…</p>
         </div>
         <button class="theme-btn" id="themeBtn">
@@ -31,7 +31,7 @@
       </div>
 
       <div class="panel">
-        <h3>Configurar algoritmo</h3>
+        <h2>Configurar algoritmo</h2>
         <div class="config" id="configFields">
           <!-- preenchido por app.js a partir de ENGINE.input.schema -->
         </div>
@@ -44,7 +44,7 @@
       <section class="trace-viewer" id="traceViewer">
         <div class="panel trace-toolbar">
           <div class="toolbar-row">
-            <span class="phase-pill" id="phase"></span>
+            <span class="phase-pill" id="phase" aria-live="polite"></span>
             <div class="step-group">
               <button
                 class="ctrl step-back"
@@ -66,40 +66,31 @@
             </div>
             <span class="count" id="count"></span>
           </div>
-          <div class="narrative" id="msg">
+          <div class="narrative" id="msg" aria-live="polite" aria-atomic="true">
             <span class="event-icon" id="msgIcon" aria-hidden="true"></span>
             <span id="msgText"></span>
           </div>
-          <input
-            type="range"
-            id="slider"
-            min="0"
-            max="0"
-            value="0"
-            class="visually-hidden-slider"
-            tabindex="-1"
-          />
         </div>
 
         <div class="grid">
           <div class="panel">
-            <h3>Código (linha atual em destaque)</h3>
+            <h2>Código (linha atual em destaque)</h2>
             <div class="code" id="codeBox"></div>
           </div>
           <div class="panel">
-            <h3>Pilha de chamadas / frames de memória</h3>
+            <h2>Pilha de chamadas / frames de memória</h2>
             <div class="stack-frames" id="stackBox"></div>
           </div>
         </div>
 
         <div class="panel">
-          <h3>Lista da chamada atual</h3>
+          <h2>Lista da chamada atual</h2>
           <div class="row" id="list"></div>
           <div class="legend" id="legend"></div>
         </div>
 
         <div class="panel">
-          <h3>Expressão recursiva (construção e redução)</h3>
+          <h2>Expressão recursiva (construção e redução)</h2>
           <div class="expr-box" id="exprBox"></div>
         </div>
       </section>
