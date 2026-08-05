@@ -19,22 +19,45 @@
     </script>
   </head>
   <body>
-    <header class="page-header">
-      <div>
-        <h1>Algorithm Visualizer</h1>
-        <p>Catálogo de algoritmos disponíveis.</p>
-      </div>
-      <button class="theme-btn" id="themeBtn">
-        <span id="themeLabel">Modo escuro</span>
-      </button>
-    </header>
+    <div class="wrap">
+      <header class="page-header">
+        <div>
+          <h1>Algorithm Visualizer</h1>
+          <p class="tagline">
+            Um depurador interativo para algoritmos recursivos. Escolha um
+            abaixo e acompanhe a pilha de chamadas crescer e desmontar,
+            passo a passo.
+          </p>
+        </div>
+        <button class="theme-btn" id="themeBtn">
+          <span
+            class="material-symbols-outlined"
+            id="themeIcon"
+            aria-hidden="true"
+            >dark_mode</span
+          >
+          <span id="themeLabel">Modo escuro</span>
+        </button>
+      </header>
 
-    <main id="catalog">
-      <p class="empty-state">Carregando manifest...</p>
-    </main>
+      <a
+        class="preview"
+        id="stackPreview"
+        href="visualizer/index.html?algoritmo=fibonacci"
+        hidden
+      >
+        <div class="preview-frames" id="previewFrames"></div>
+        <p class="preview-caption" id="previewCaption"></p>
+      </a>
+
+      <main id="catalog">
+        <p class="empty-state">Carregando manifest...</p>
+      </main>
+    </div>
 
     <script src="manifest.js"></script>
     <script src="catalog.js"></script>
+    <script type="module" src="preview.js"></script>
     <script>
       // Toggle de tema equivalente ao do visualizer (visualizer/app.js
       // toggleTheme), duplicado aqui em vez de importado porque o
@@ -45,6 +68,8 @@
         const next =
           root.getAttribute("data-theme") === "dark" ? "light" : "dark";
         root.setAttribute("data-theme", next);
+        document.getElementById("themeIcon").textContent =
+          next === "dark" ? "light_mode" : "dark_mode";
         document.getElementById("themeLabel").textContent =
           next === "dark" ? "Modo claro" : "Modo escuro";
       });
