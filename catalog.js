@@ -72,7 +72,10 @@
       btn.type = "button";
       btn.className = "lang-pill";
       btn.textContent = label;
-      btn.setAttribute("aria-pressed", value === activeLanguage ? "true" : "false");
+      btn.setAttribute(
+        "aria-pressed",
+        value === activeLanguage ? "true" : "false",
+      );
       if (value === activeLanguage) btn.classList.add("is-active");
       btn.addEventListener("click", function () {
         activeLanguage = value;
@@ -135,31 +138,15 @@
       var body = document.createElement("span");
       body.className = "frame-body";
 
-      var titleRow = document.createElement("span");
-      titleRow.className = "frame-title-row";
-
       var titleEl = document.createElement("span");
       titleEl.className = "frame-title";
       titleEl.textContent = entry.title || entry.id;
-
-      var langEl = document.createElement("span");
-      langEl.className = "frame-lang";
-      langEl.textContent = entry.language || "?";
-
-      titleRow.appendChild(titleEl);
-      titleRow.appendChild(langEl);
-      if (entry.complexity) {
-        var complexityEl = document.createElement("span");
-        complexityEl.className = "frame-complexity";
-        complexityEl.textContent = entry.complexity;
-        titleRow.appendChild(complexityEl);
-      }
 
       var descEl = document.createElement("span");
       descEl.className = "frame-desc";
       descEl.textContent = entry.description || "";
 
-      body.appendChild(titleRow);
+      body.appendChild(titleEl);
       body.appendChild(descEl);
 
       var arrowEl = document.createElement("span");
